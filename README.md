@@ -1,203 +1,85 @@
-# Sistema de Supermercado Queiroz
+# Sistema de Supermercado Queiroz — Guia Rápido
 
-Sistema completo de gestão de pedidos para supermercados com arquitetura multi-tenant, desenvolvido com FastAPI (backend) e React (frontend).
+Aplicação multi-tenant para gestão de pedidos de supermercados.
+Backend em FastAPI e frontend em React (Vite).
 
-## 🚀 Funcionalidades
+## Pré-requisitos
 
-### Para Administradores
-- Dashboard administrativo com visão geral de todos os supermercados
-- Gerenciamento completo de supermercados (CRUD)
-- Analytics avançados com gráficos e métricas
-- Controle de usuários e permissões
+- `Python 3.10+` e `pip`
+- `Node.js 18+` e `npm`
+- (Opcional) `Docker` e `Docker Compose`
 
-### Para Supermercados (Clientes)
-- Painel de pedidos com filtros por status
-- Gestão completa de pedidos (criar, editar, excluir)
-- Alteração de status dos pedidos (pendente/faturado)
-- Analytics específicos do supermercado
-- Interface moderna com tema escuro
-
-## 🏗️ Arquitetura
+## Desenvolvimento Local
 
 ### Backend (FastAPI)
-- **Autenticação JWT** com middleware multi-tenant
-- **Banco de dados PostgreSQL** com SQLAlchemy
-- **API RESTful** com documentação automática (Swagger)
-- **Validação de dados** com Pydantic
-- **Arquitetura multi-tenant** para isolamento de dados
+- `cd backend`
+- `python -m venv .venv && source .venv/bin/activate`
+- `pip install -r requirements.txt`
+- `uvicorn main:app --reload --port 8000`
+- API Docs: `http://localhost:8000/docs`
 
 ### Frontend (React + Vite)
-- **Interface moderna** com TailwindCSS e tema escuro
-- **Roteamento** com React Router DOM
-- **Gráficos interativos** com Recharts
-- **Componentes reutilizáveis** e responsivos
-- **Gerenciamento de estado** com hooks do React
+- `cd frontend`
+- `npm install`
+- Configure o backend URL criando `frontend/.env.local` com:
+  - `VITE_API_BASE_URL=http://localhost:8000`
+- Desenvolvimento: `npm run dev -- --port 4175`
+- Build: `npm run build`
+- Preview de produção: `npm run preview -- --port 4173` (abre em `http://localhost:4173`)
 
-### Infraestrutura
-- **Docker** e Docker Compose para containerização
-- **PostgreSQL** como banco de dados principal
-- **Nginx** para servir o frontend em produção
-- **pgAdmin** para administração do banco (opcional)
+## Docker (opcional)
 
-## 📋 Pré-requisitos
+- `docker-compose up --build -d`
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+- Docs: `http://localhost:8000/docs`
 
-- Docker e Docker Compose instalados
-- Node.js 18+ (para desenvolvimento local)
-- Python 3.11+ (para desenvolvimento local)
+## Impressão Térmica (80mm)
 
-## 🚀 Instalação e Execução
+- No painel de pedidos, use o botão `Imprimir` no cartão do pedido.
+- O recibo inclui: loja, data, pedido, itens em duas linhas, total, forma de pagamento e observações.
+- Campos usados:
+  - Forma de pagamento: `pedido.forma`
+  - Observações: `pedido.observacao` ou `pedido.observacoes`
+  - Nome da loja: `localStorage.user.nome`
+- Para 58mm, ajuste em `frontend/src/components/PedidoCard.jsx`:
+  - `@page { size: 58mm auto; }` e `body { width: 58mm; }`
 
-### Opção 1: Docker Compose (Recomendado)
+## Variáveis de Ambiente
 
-1. **Clone o repositório:**
-```bash
-git clone <url-do-repositorio>
-cd sistema-supermercado
-```
+- Frontend (Vite): `VITE_API_BASE_URL`
+- Backend (Docker Compose): `DATABASE_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`
 
-2. **Execute com Docker Compose:**
-```bash
-docker-compose up --build
-```
+## Endpoints principais
 
-3. **Acesse as aplicações:**
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8000
-- **Documentação da API:** http://localhost:8000/docs
-- **pgAdmin:** http://localhost:5050 (opcional)
+- `POST /api/auth/login` — Login (`email`, `senha`)
+- `GET /api/pedidos` — Lista pedidos (aceita `status`, `tenant_id`)
+- `POST /api/pedidos` — Cria pedido
+- `PUT /api/pedidos/{id}` — Atualiza pedido
+- `DELETE /api/pedidos/{id}` — Remove pedido
+- `GET /api/supermarkets` — Lista supermercados (aceita `tenant_id`)
+- `GET /api/supermarkets/{id}` — Detalhes do supermercado
 
-### Opção 2: Desenvolvimento Local
+## Dicas rápidas
 
-#### Backend
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
+- Se o dev server do frontend estiver em outra porta, atualize `VITE_API_BASE_URL` pela `.env.local`.
+- Em caso de erro 401, o frontend limpa `token`/`user` e redireciona para `/login`.
+- Para testar criação de pedido via API, veja `http://localhost:8000/docs`.
 
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+## Scripts úteis
 
-#### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
+- Frontend: `npm run dev`, `npm run build`, `npm run preview`
+- Backend: `uvicorn main:app --reload --port 8000`
 
-#### Banco de dados
-```bash
-# Execute PostgreSQL via Docker
-docker run --name postgres-supermercado \
-  -e POSTGRES_DB=supermercado_db \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres123 \
-  -p 5432:5432 \
-  -d postgres:15-alpine
-```
-
-## 🔐 Credenciais de Acesso
-
-### Usuário Administrador
-- **Email:** admin@admin.com
-- **Senha:** admin123
-
-### Usuários de Teste (Supermercados)
-- **Email:** central@exemplo.com | **Senha:** admin123
-- **Email:** bairro@exemplo.com | **Senha:** admin123
-- **Email:** atacado@exemplo.com | **Senha:** admin123
-
-## 📊 Estrutura do Projeto
+## Estrutura (resumo)
 
 ```
 sistema-supermercado/
-├── backend/
-│   ├── auth/                 # Autenticação e middleware
-│   ├── models/              # Modelos do banco de dados
-│   ├── routes/              # Rotas da API
-│   ├── schemas/             # Schemas Pydantic
-│   ├── database.py          # Configuração do banco
-│   ├── main.py              # Aplicação principal
-│   ├── requirements.txt     # Dependências Python
-│   └── Dockerfile           # Container do backend
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Componentes React
-│   │   ├── pages/           # Páginas da aplicação
-│   │   ├── services/        # Serviços de API
-│   │   ├── App.jsx          # Componente principal
-│   │   └── main.jsx         # Ponto de entrada
-│   ├── package.json         # Dependências Node.js
-│   ├── Dockerfile           # Container do frontend
-│   └── nginx.conf           # Configuração Nginx
-├── docker-compose.yml       # Orquestração dos containers
-├── init.sql                 # Script de inicialização do DB
-└── README.md               # Este arquivo
+├── backend/            # FastAPI
+├── frontend/           # React + Vite
+├── docker-compose.yml
+└── init.sql
 ```
-
-## 🔧 Configuração
-
-### Variáveis de Ambiente
-
-#### Backend (.env)
-```env
-DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/supermercado_db
-SECRET_KEY=your-super-secret-key-change-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-#### Frontend
-```env
-REACT_APP_API_URL=http://localhost:8000
-```
-
-## 📚 API Endpoints
-
-### Autenticação
-- `POST /auth/register` - Registrar novo usuário
-- `POST /auth/login` - Login de usuário
-
-### Supermercados (Admin apenas)
-- `GET /supermarkets/` - Listar supermercados
-- `POST /supermarkets/` - Criar supermercado
-- `GET /supermarkets/{id}` - Obter supermercado
-- `PUT /supermarkets/{id}` - Atualizar supermercado
-- `DELETE /supermarkets/{id}` - Excluir supermercado
-
-### Pedidos (Multi-tenant)
-- `GET /pedidos/` - Listar pedidos do tenant
-- `POST /pedidos/` - Criar pedido
-- `GET /pedidos/{id}` - Obter pedido
-- `PUT /pedidos/{id}` - Atualizar pedido
-- `DELETE /pedidos/{id}` - Excluir pedido
-
-## 🎨 Interface do Usuário
-
-### Tema Escuro
-- Paleta de cores moderna e profissional
-- Componentes responsivos para desktop e mobile
-- Ícones da biblioteca Lucide React
-- Animações suaves e feedback visual
-
-### Componentes Principais
-- **Sidebar:** Navegação lateral com menu dinâmico
-- **Header:** Cabeçalho com busca e notificações
-- **Cards:** Exibição de pedidos e estatísticas
-- **Gráficos:** Visualização de dados com Recharts
-- **Modais:** Formulários para CRUD operations
-
-## 🔒 Segurança
-
-- **Autenticação JWT** com tokens seguros
-- **Middleware multi-tenant** para isolamento de dados
-- **Validação de entrada** em todas as rotas
-- **Headers de segurança** configurados no Nginx
-- **Senhas hasheadas** com bcrypt
-
-## 📈 Monitoramento
 
 ### Logs
 - Logs estruturados no backend
