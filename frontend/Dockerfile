@@ -5,7 +5,7 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Recebe a variável do ambiente (vinda do EasyPanel)
+# Recebe variável do ambiente do EasyPanel
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
@@ -13,13 +13,13 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 COPY package*.json ./
 RUN npm ci
 
-# Copiar código-fonte
+# Copiar o código
 COPY . .
 
-# Garante que a variável entre no build do Vite
+# Criar .env usado pelo Vite no build
 RUN echo "VITE_API_BASE_URL=${VITE_API_BASE_URL}" > .env
 
-# Compila o app com HTTPS correto
+# Compilar o app com HTTPS
 RUN npm run build
 
 # ================================
@@ -27,10 +27,7 @@ RUN npm run build
 # ================================
 FROM nginx:alpine
 
-# Copiar build
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copiar configuração customizada
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
