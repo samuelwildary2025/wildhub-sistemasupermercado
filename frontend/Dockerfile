@@ -5,20 +5,21 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Recebe variável do ambiente do EasyPanel
-ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-
-# Instalar dependências
+# Copiar dependências e instalar
 COPY package*.json ./
 RUN npm ci
 
 # Copiar código-fonte
 COPY . .
 
-# ✅ Injetar variável diretamente no build
-# O Alpine usa 'sh', então este comando funciona 100%
-RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
+# Receber variável manualmente (do EasyPanel)
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+# ✅ Substituir manualmente dentro do Vite antes de buildar
+RUN echo "Injetando VITE_API_BASE_URL=${VITE_API_BASE_URL}" && \
+    sed -i "s|import\.meta\.env\.VITE_API_BASE_URL|\"${VITE_API_BASE_URL}\"|g" src/axios.js && \
+    npm run build
 
 # ================================
 # 🚀 Production Stage (Nginx)
