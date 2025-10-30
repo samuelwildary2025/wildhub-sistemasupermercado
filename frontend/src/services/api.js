@@ -3,15 +3,14 @@ import axios from 'axios'
 // === Configuração dinâmica da URL base ===
 const DEFAULT_HOST = 'wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
 
-// Detecta se está rodando no navegador e obtém o protocolo (http ou https)
-const currentProtocol = typeof window !== 'undefined'
-  ? window.location.protocol
-  : 'https:'
-
-// Se houver variável no .env, usa ela. Caso contrário, monta automaticamente
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  `${currentProtocol}//${DEFAULT_HOST}`
+// Se houver variável no .env, usa ela com prioridade máxima
+// Caso contrário, detecta protocolo ou usa HTTPS por padrão
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (() => {
+  const currentProtocol = typeof window !== 'undefined'
+    ? window.location.protocol
+    : 'https:'
+  return `${currentProtocol}//${DEFAULT_HOST}`
+})()
 
 console.log('🔗 API_BASE_URL =', API_BASE_URL)
 
