@@ -16,11 +16,8 @@ RUN npm ci
 # Copiar o código
 COPY . .
 
-# Criar .env usado pelo Vite no build
-RUN echo "VITE_API_BASE_URL=${VITE_API_BASE_URL}" > .env
-
-# Compilar o app com HTTPS
-RUN npm run build
+# ✅ Forçar o uso da variável durante o build do Vite
+RUN VITE_API_BASE_URL=${VITE_API_BASE_URL} npm run build
 
 # ================================
 # 🚀 Production Stage (Nginx)
@@ -31,5 +28,4 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
