@@ -77,11 +77,12 @@ try:
     try:
         print("\n🔄 Tentando importar database...")
         from database import get_db, engine
+        from sqlalchemy import text
         print("✅ Database importado!")
         
         print("🔄 Testando conexão com banco...")
         db = next(get_db())
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         print("✅ Conexão com banco funcionando!")
         
     except Exception as e:
