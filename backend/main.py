@@ -137,6 +137,18 @@ try:
         import traceback
         traceback.print_exc()
 
+    try:
+        print("\n🔄 Tentando importar rotas de financeiro...")
+        from routes.financeiro import router as financeiro_router
+        app.include_router(financeiro_router)
+        routes_loaded.append("financeiro")
+        print("✅ Rotas de financeiro carregadas!")
+    except Exception as e:
+        routes_failed.append(f"financeiro: {e}")
+        print(f"❌ ERRO nas rotas de financeiro: {e}")
+        import traceback
+        traceback.print_exc()
+
     @app.get("/debug/routes")
     def debug_routes():
         return {
