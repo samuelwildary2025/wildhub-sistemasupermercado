@@ -1,49 +1,49 @@
-# Sistema de Supermercado Queiroz
+# Sistema de Supermercado
 
-Sistema completo de gestão de pedidos para supermercados com arquitetura multi-tenant, desenvolvido com FastAPI (backend) e React (frontend).
+Sistema completo de gestão de supermercados com autenticação híbrida (JWT + tokens manuais) para integração com sistemas externos.
 
 ## 🚀 Funcionalidades
 
-### Para Administradores
-- Dashboard administrativo com visão geral de todos os supermercados
-- Gerenciamento completo de supermercados (CRUD)
-- Analytics avançados com gráficos e métricas
-- Controle de usuários e permissões
+### Autenticação Híbrida
+- **JWT Tokens**: Para autenticação web tradicional
+- **Tokens Manuais**: Para integração com sistemas externos (ERPs, PDVs, etc.)
+- Middleware inteligente que valida ambos os tipos de token
 
-### Para Supermercados (Clientes)
-- Painel de pedidos com filtros por status
-- Gestão completa de pedidos (criar, editar, excluir)
-- Alteração de status dos pedidos (pendente/faturado)
-- Analytics específicos do supermercado
-- Interface moderna com tema escuro
+### Gestão de Supermercados
+- Cadastro e gerenciamento de supermercados
+- Configuração de tokens manuais personalizados
+- Interface web para administração
 
-## 🏗️ Arquitetura
+### Sistema de Pedidos
+- Criação de pedidos via API
+- Suporte a múltiplos itens por pedido
+- Validação automática de tenant (supermercado)
 
-### Backend (FastAPI)
-- **Autenticação JWT** com middleware multi-tenant
-- **Banco de dados PostgreSQL** com SQLAlchemy
-- **API RESTful** com documentação automática (Swagger)
-- **Validação de dados** com Pydantic
-- **Arquitetura multi-tenant** para isolamento de dados
+### Dashboard Administrativo
+- Painel de controle completo
+- Visualização de pedidos em tempo real
+- Gestão de supermercados cadastrados
 
-### Frontend (React + Vite)
-- **Interface moderna** com TailwindCSS e tema escuro
-- **Roteamento** com React Router DOM
-- **Gráficos interativos** com Recharts
-- **Componentes reutilizáveis** e responsivos
-- **Gerenciamento de estado** com hooks do React
+## 🛠️ Tecnologias
 
-### Infraestrutura
-- **Docker** e Docker Compose para containerização
-- **PostgreSQL** como banco de dados principal
-- **Nginx** para servir o frontend em produção
-- **pgAdmin** para administração do banco (opcional)
+### Backend
+- **FastAPI**: Framework web moderno e rápido
+- **SQLite**: Banco de dados leve e eficiente
+- **Pydantic**: Validação de dados
+- **JWT**: Autenticação segura
 
-## 📋 Pré-requisitos
+### Frontend
+- **React**: Biblioteca para interfaces de usuário
+- **Vite**: Build tool rápido
+- **Tailwind CSS**: Framework CSS utilitário
+- **Axios**: Cliente HTTP
 
-- Docker e Docker Compose instalados
-- Node.js 18+ (para desenvolvimento local)
-- Python 3.11+ (para desenvolvimento local)
+## 📦 Instalação
+
+### Pré-requisitos
+- Python 3.8+
+- Node.js 16+
+- npm ou yarn
 
 ## 🚀 Instalação e Execução
 
