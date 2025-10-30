@@ -12,13 +12,21 @@ from routes.financeiro import router as financeiro_router
 from routes.clientes import router as clientes_router
 from auth.jwt_handler import get_password_hash
 
-# Criar tabelas
-UserModel.metadata.create_all(bind=engine)
-Supermarket.metadata.create_all(bind=engine)
-Pedido.metadata.create_all(bind=engine)
-ItemPedido.metadata.create_all(bind=engine)
-SupermarketHistory.metadata.create_all(bind=engine)
-Cliente.metadata.create_all(bind=engine)
+# Criar tabelas com tratamento de erro
+try:
+    print("🏗️  Criando tabelas no banco de dados...")
+    UserModel.metadata.create_all(bind=engine)
+    Supermarket.metadata.create_all(bind=engine)
+    Pedido.metadata.create_all(bind=engine)
+    ItemPedido.metadata.create_all(bind=engine)
+    SupermarketHistory.metadata.create_all(bind=engine)
+    Cliente.metadata.create_all(bind=engine)
+    print("✅ Tabelas criadas com sucesso!")
+except Exception as e:
+    print(f"❌ ERRO ao criar tabelas: {e}")
+    import traceback
+    traceback.print_exc()
+    # Não interrompe a aplicação, mas registra o erro
 
 app = FastAPI(
     title="Supermercado Queiroz - API",
@@ -53,12 +61,32 @@ def read_root():
 
 @app.on_event("startup")
 async def startup_event():
-    """Criar usuário admin inicial se não existir"""
-    db = next(get_db())
+    """Inicialização da aplicação"""
+    print("🚀 Iniciando aplicação...")
+    
+    # Verificar conexão com banco
+    try:
+        print("🔌 Testando conexão com banco de dados...")
+        db = next(get_db())
+        
+        # Testar conexão básica
+        if engine.url.drivername.startswith('postgresql'):
+            result = db.execute(text("SELECT version()"))
+            version = result.fetchone()[0]
+            print(f"✅ PostgreSQL conectado: {version[:50]}...")
+        else:
+            print("✅ SQLite conectado")
+            
+    except Exception as e:
+        print(f"❌ ERRO na conexão com banco: {e}")
+        db.close()
+        return
+    
     # Garantir colunas extras no SQLite para Pedido (forma, endereco, observacao)
     try:
         dialect = db.bind.dialect.name if db.bind is not None else ""
         if dialect == "sqlite":
+            print("🔧 Verificando colunas extras no SQLite...")
             cols = db.execute(text("PRAGMA table_info('pedidos')")).fetchall()
             existing = {row[1] for row in cols}  # name está na posição 1
             to_add = []
@@ -72,28 +100,36 @@ async def startup_event():
                 db.execute(text(stmt))
             if to_add:
                 db.commit()
-    except Exception:
-        # Evitar travar startup por erro de migração em runtime
-        pass
+                print(f"✅ Colunas adicionadas: {len(to_add)}")
+    except Exception as e:
+        print(f"⚠️  Erro ao adicionar colunas extras: {e}")
+        # Não interrompe a aplicação
     
-    # Verificar se já existe um admin
-    admin_user = db.query(UserModel).filter(UserModel.email == "admin@admin.com").first()
+    # Verificar e criar usuário admin
+    try:
+        print("👤 Verificando usuário admin...")
+        admin_user = db.query(UserModel).filter(UserModel.email == "admin@admin.com").first()
+        
+        if not admin_user:
+            # Criar usuário admin
+            admin_user = UserModel(
+                nome="Administrador",
+                email="admin@admin.com",
+                senha_hash=get_password_hash("admin123"),
+                role="admin"
+            )
+            db.add(admin_user)
+            db.commit()
+            print("✅ Usuário admin criado: admin@admin.com / admin123")
+        else:
+            print("✅ Usuário admin já existe")
+            
+    except Exception as e:
+        print(f"❌ ERRO ao criar usuário admin: {e}")
+    finally:
+        db.close()
     
-    if not admin_user:
-        # Criar usuário admin
-        admin_user = UserModel(
-            nome="Administrador",
-            email="admin@admin.com",
-            senha_hash=get_password_hash("admin123"),
-            role="admin"
-        )
-        db.add(admin_user)
-        db.commit()
-        print("✅ Usuário admin criado: admin@admin.com / admin123")
-    else:
-        print("✅ Usuário admin já existe")
-    
-    db.close()
+    print("🎉 Aplicação iniciada com sucesso!")
 
 if __name__ == "__main__":
     import uvicorn
