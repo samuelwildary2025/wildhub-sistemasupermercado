@@ -1,34 +1,38 @@
-# Build stage
-FROM node:18-alpine as build
+# ================================
+# 🔧 Build Stage
+# ================================
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Recebe a variável do ambiente (vinda do EasyPanel)
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-# Install dependencies
+# Copiar pacotes e instalar dependências
+COPY package*.json ./
 RUN npm ci
 
-# Copy source code
+# Copiar código-fonte
 COPY . .
 
-# Set production environment
-ENV NODE_ENV=production
+# Garante que a variável entre no build do Vite
+RUN echo "VITE_API_BASE_URL=${VITE_API_BASE_URL}" > .env
 
-# Build the application for production
+# Compila o app com HTTPS correto
 RUN npm run build
 
-# Production stage
+# ================================
+# 🚀 Production Stage (Nginx)
+# ================================
 FROM nginx:alpine
 
-# Copy built assets from build stage
+# Copiar build
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration
+# Copiar configuração customizada
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
 EXPOSE 80
 
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
