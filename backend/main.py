@@ -124,7 +124,19 @@ try:
         print(f"❌ ERRO nas rotas de pedidos: {e}")
         import traceback
         traceback.print_exc()
-    
+
+    try:
+        print("\n🔄 Tentando importar rotas de clientes...")
+        from routes.clientes import router as clientes_router
+        app.include_router(clientes_router)
+        routes_loaded.append("clientes")
+        print("✅ Rotas de clientes carregadas!")
+    except Exception as e:
+        routes_failed.append(f"clientes: {e}")
+        print(f"❌ ERRO nas rotas de clientes: {e}")
+        import traceback
+        traceback.print_exc()
+
     @app.get("/debug/routes")
     def debug_routes():
         return {
