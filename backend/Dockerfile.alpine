@@ -1,19 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-# Instalar dependências do sistema para PostgreSQL
-RUN apt-get update && apt-get install -y \
+# Instalar dependências do sistema para PostgreSQL no Alpine
+RUN apk add --no-cache \
     gcc \
-    libpq-dev \
+    musl-dev \
+    postgresql-dev \
     python3-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    build-base
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt .
 
-# Instalar dependências com cache limpo
+# Instalar dependências
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir psycopg2-binary==2.9.9
 RUN pip install --no-cache-dir -r requirements.txt

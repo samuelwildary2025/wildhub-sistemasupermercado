@@ -44,6 +44,8 @@ app.add_middleware(
         "http://localhost:4175",
         "http://localhost:80",
         "http://localhost",
+        "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
+        "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
         "https://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
         "http://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
     ],
@@ -76,6 +78,8 @@ def debug_info():
             "http://localhost:5173", 
             "http://localhost:4173",
             "http://localhost:4175",
+            "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
+            "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
             "https://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
             "http://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
         ]
