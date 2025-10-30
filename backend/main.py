@@ -26,35 +26,29 @@ except Exception as e:
     print(f"❌ ERRO ao criar tabelas: {e}")
     import traceback
     traceback.print_exc()
-    # Não interrompe a aplicação, mas registra o erro
 
+# Inicialização do FastAPI
 app = FastAPI(
     title="Supermercado Queiroz - API",
     description="Sistema SaaS de Gestão de Pedidos para Supermercados",
     version="1.0.0"
 )
 
-# Configurar CORS - Incluindo domínios de produção e localhost interno
+# Configuração CORS - produção e local
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:4173",
-        "http://localhost:4175",
-        "http://localhost:80",
-        "http://localhost",
         "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
         "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
-        "https://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
-        "http://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Incluir rotas
+# Rotas principais
 app.include_router(auth_router)
 app.include_router(supermarkets_router)
 app.include_router(pedidos_router)
@@ -74,14 +68,10 @@ def debug_info():
         "database_connected": True,
         "cors_enabled": True,
         "allowed_origins": [
-            "http://localhost:3000",
-            "http://localhost:5173", 
+            "http://localhost:5173",
             "http://localhost:4173",
-            "http://localhost:4175",
             "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
             "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
-            "https://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
-            "http://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
         ]
     }
 
@@ -97,12 +87,9 @@ def debug_routes():
 @app.on_event("startup")
 async def startup_event():
     print("🚀 API iniciada com sucesso!")
-    
-    # Criar usuário admin se não existir
     import os
     from sqlalchemy.orm import Session
     
-    # Obter credenciais do admin das variáveis de ambiente
     admin_email = os.getenv("ADMIN_EMAIL", "admin@admin.com")
     admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
     admin_name = os.getenv("ADMIN_NAME", "Administrador")
@@ -124,16 +111,15 @@ async def startup_event():
             print(f"✅ Usuário admin criado: {admin_email}")
         else:
             print(f"👤 Usuário admin já existe: {admin_email}")
-            
     except Exception as e:
         print(f"❌ Erro ao criar usuário admin: {e}")
     finally:
         db.close()
-    
+
     print("📊 Rotas disponíveis:")
     for route in app.routes:
         print(f"  {route.methods} {route.path}")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=80)
