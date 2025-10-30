@@ -34,7 +34,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar CORS - Incluindo domínios de produção
+# Configurar CORS - Incluindo domínios de produção e localhost interno
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -42,6 +42,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:4173",
         "http://localhost:4175",
+        "http://localhost:80",
+        "http://localhost",
         "https://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
         "http://wildhub-frontend-sistema-super-mercado.6mos1l.easypanel.host",
     ],
@@ -91,6 +93,39 @@ def debug_routes():
 @app.on_event("startup")
 async def startup_event():
     print("🚀 API iniciada com sucesso!")
+    
+    # Criar usuário admin se não existir
+    import os
+    from sqlalchemy.orm import Session
+    
+    # Obter credenciais do admin das variáveis de ambiente
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@admin.com")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+    admin_name = os.getenv("ADMIN_NAME", "Administrador")
+    
+    try:
+        db = next(get_db())
+        admin_user = db.query(UserModel).filter(UserModel.email == admin_email).first()
+        
+        if not admin_user:
+            print(f"👤 Criando usuário admin: {admin_email}")
+            admin_user = UserModel(
+                nome=admin_name,
+                email=admin_email,
+                senha_hash=get_password_hash(admin_password),
+                role="admin"
+            )
+            db.add(admin_user)
+            db.commit()
+            print(f"✅ Usuário admin criado: {admin_email}")
+        else:
+            print(f"👤 Usuário admin já existe: {admin_email}")
+            
+    except Exception as e:
+        print(f"❌ Erro ao criar usuário admin: {e}")
+    finally:
+        db.close()
+    
     print("📊 Rotas disponíveis:")
     for route in app.routes:
         print(f"  {route.methods} {route.path}")
