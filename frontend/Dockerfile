@@ -9,15 +9,16 @@ WORKDIR /app
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-# Copiar pacotes e instalar dependências
+# Instalar dependências
 COPY package*.json ./
 RUN npm ci
 
-# Copiar o código
+# Copiar código-fonte
 COPY . .
 
-# ✅ Forçar o uso da variável durante o build do Vite
-RUN VITE_API_BASE_URL=${VITE_API_BASE_URL} npm run build
+# ✅ Injetar variável diretamente no build
+# O Alpine usa 'sh', então este comando funciona 100%
+RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
 
 # ================================
 # 🚀 Production Stage (Nginx)
