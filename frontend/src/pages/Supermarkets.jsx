@@ -748,7 +748,7 @@ const Supermarkets = () => {
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                   {paginatedSupermarkets.map((supermarket) => (
-                    <div key={supermarket.id} className="card hover:shadow-lg transition-shadow">
+                    <div key={supermarket.id} className="card p-4 hover:shadow-lg transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           {supermarket.logo_url ? (
