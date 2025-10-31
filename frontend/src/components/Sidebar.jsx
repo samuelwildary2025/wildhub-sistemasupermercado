@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Home, ShoppingCart, BarChart3, Building2, DollarSign, LogOut } from 'lucide-react'
+import { Home, ShoppingCart, BarChart3, Building2, DollarSign, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Sidebar({ user, onLogout }) {
   const navigate = useNavigate()
@@ -37,12 +37,14 @@ export default function Sidebar({ user, onLogout }) {
           </div>
           {!isCollapsed && <span className="font-semibold text-gray-800 dark:text-white">Wildhub</span>}
         </div>
+        
+        {/* CORRIGIDO: Substituir setas de texto por ícones Lucide */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-gray-500 dark:text-gray-300 hover:text-blue-500 transition-colors"
+          className="p-1 rounded-full text-gray-500 dark:text-gray-300 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
           aria-label="Alternar largura da sidebar"
         >
-          {isCollapsed ? '➡️' : '⬅️'}
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
