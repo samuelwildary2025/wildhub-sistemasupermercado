@@ -2,29 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    @apply border-gray-300;
-  }
-  body {
-    @apply bg-dark-900 text-white;
-  }
+/* ✨ Suaviza a troca de temas */
+html {
+  scroll-behavior: smooth;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-@layer components {
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
-  }
-  
-  .btn-secondary {
-    @apply bg-dark-700 hover:bg-dark-600 text-white font-medium py-2 px-4 rounded-lg transition-colors;
-  }
-  
-  .card {
-    @apply bg-dark-800 border border-dark-700 rounded-lg p-6 shadow-lg;
-  }
-  
-  .input {
-    @apply bg-dark-800 border border-dark-700 text-white placeholder-dark-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
-  }
+body {
+  @apply bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* 🔹 Deixa inputs, cards e botões mais uniformes */
+.input {
+  @apply bg-white dark:bg-dark-700 border border-gray-300 dark:border-dark-600 rounded-md px-3 py-2 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-light transition;
+}
+
+.card {
+  @apply bg-white dark:bg-dark-800 shadow-sm dark:shadow-none border border-gray-200 dark:border-dark-700 rounded-xl p-4 transition;
 }
