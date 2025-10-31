@@ -6,7 +6,8 @@
    🎨 Estilo Global — Wildhub System
 ================================= */
 html, body, #root {
-  @apply min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-800 dark:text-gray-100 transition-colors duration-300;
+  /* MODIFICADO: Remove classes de fundo/texto globalmente. O AdminLayout agora gerencia o fundo/texto principal para evitar conflitos de tema. */
+  @apply min-h-screen transition-colors duration-300;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -14,10 +15,13 @@ html, body, #root {
    🧩 Componentes Base
 ================================= */
 .card {
-  @apply bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
+  /* MODIFICADO: Define explicitamente cores para Light Mode (padrão) e Dark Mode */
+  @apply bg-white text-gray-900 border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
+  @apply dark:bg-dark-800 dark:text-gray-100 dark:border-dark-700;
 }
 
 .input {
+  /* MELHORADO: Garante que o texto do input seja escuro no modo claro */
   @apply bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-gray-100 
          border border-gray-300 dark:border-dark-600 
          rounded-md py-2 px-3 
@@ -86,23 +90,9 @@ p {
 }
 
 /* ================================
-   🌗 Corrige contraste modo claro
+   ❌ REMOVIDO BLOCO DE CORREÇÃO DE CONTRASTE COM !IMPORTANT
+   (Essa correção estava causando o problema de cores mistas)
 ================================= */
-.bg-white {
-  background-color: #ffffff !important;
-}
-
-.dark .bg-white {
-  background-color: #0f172a !important;
-}
-
-.border-gray-200 {
-  border-color: #e5e7eb !important;
-}
-
-.dark .border-gray-200 {
-  border-color: #334155 !important;
-}
 
 /* ================================
    📱 Responsividade
