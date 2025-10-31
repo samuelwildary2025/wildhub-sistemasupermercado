@@ -79,7 +79,7 @@ export const register = (userData) => api.post('/auth/register', userData)
 export const getSupermarkets = (tenantId = null) => {
   const params = {}
   if (tenantId) params.tenant_id = tenantId
-  return api.get('/supermarkets', { params })
+  return api.get('/supermarkets/', { params })
 }
 
 export const getSupermarket = (id) => api.get(`/supermarkets/${id}`)
@@ -87,7 +87,7 @@ export const getSupermarketIntegrationToken = (id) => api.get(`/supermarkets/${i
 export const resetSupermarketPassword = (id) => api.post(`/supermarkets/${id}/reset-password`)
 export const saveCustomToken = (id, customToken) =>
   api.put(`/supermarkets/${id}/custom-token`, { custom_token: customToken })
-export const createSupermarket = (supermarket) => api.post('/supermarkets', supermarket)
+export const createSupermarket = (supermarket) => api.post('/supermarkets/', supermarket)
 export const updateSupermarket = (id, supermarket) => api.put(`/supermarkets/${id}`, supermarket)
 
 export const deleteSupermarket = (id, options = {}) => {
@@ -111,9 +111,9 @@ export const agentTest = (id, { url, payload, headers } = {}) => {
 export const getClients = (tenantId = null) => {
   const params = {}
   if (tenantId) params.tenant_id = tenantId
-  return api.get('/clientes', { params })
+  return api.get('/clientes/', { params })
 }
-export const createClient = (client) => api.post('/clientes', client)
+export const createClient = (client) => api.post('/clientes/', client)
 export const updateClient = (id, client) => api.put(`/clientes/${id}`, client)
 export const deleteClient = (id) => api.delete(`/clientes/${id}`)
 
@@ -122,9 +122,9 @@ export const getPedidos = (status = null, tenantId = null) => {
   const params = {}
   if (status) params.status = status
   if (tenantId) params.tenant_id = tenantId
-  return api.get('/pedidos', { params })
+  return api.get('/pedidos/', { params })
 }
-export const createPedido = (pedido) => api.post('/pedidos', pedido)
+export const createPedido = (pedido) => api.post('/pedidos/', pedido)
 
 export const createPedidoWithCustomToken = (pedido, customToken) => {
   console.log('🔧 createPedidoWithCustomToken usando API_BASE_URL:', API_BASE_URL)
@@ -151,7 +151,7 @@ export const createPedidoWithCustomToken = (pedido, customToken) => {
   
   console.log('🚀 customAxios baseURL:', customAxios.defaults.baseURL)
   
-  return customAxios.post('/pedidos', pedido)
+  return customAxios.post('/pedidos/', pedido)
 }
 
 export const updatePedido = (id, pedido) => api.put(`/pedidos/${id}`, pedido)
@@ -160,5 +160,8 @@ export const deletePedido = (id) => api.delete(`/pedidos/${id}`)
 // === Financeiro (Admin / Multitenant) ===
 export const getFinanceiro = (tenantId) => api.get(`/admin/financeiro/${tenantId}`)
 export const gerarFatura = (tenantId) => api.post(`/admin/financeiro/${tenantId}/fatura`)
+
+// Exporta base normalizada para uso em páginas (evita duplicações /api/api)
+export const API_BASE = API_BASE_URL
 
 export default api

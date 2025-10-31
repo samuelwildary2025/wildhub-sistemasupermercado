@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getSupermarkets, getSupermarket, createSupermarket, updateSupermarket, deleteSupermarket, getSupermarketIntegrationToken, resetSupermarketPassword, createPedidoWithCustomToken, saveCustomToken } from '../services/api'
+import { getSupermarkets, getSupermarket, createSupermarket, updateSupermarket, deleteSupermarket, getSupermarketIntegrationToken, resetSupermarketPassword, createPedidoWithCustomToken, saveCustomToken, API_BASE as API_BASE_URL } from '../services/api'
 import { agentTest } from '../services/api'
 import Header from '../components/Header'
 import { Plus, Edit, Trash2, Store, Mail, Phone, Calendar, Activity, MapPin, Clock, CreditCard, Package, Upload, AlertCircle, CheckCircle, Loader, Search, Filter, Eye, History, ChevronLeft, ChevronRight, X, Copy } from 'lucide-react'
@@ -33,9 +33,8 @@ const Supermarkets = () => {
   const [isTestingIntegration, setIsTestingIntegration] = useState(false)
   const [integrationToken, setIntegrationToken] = useState('')
   const [isLoadingIntegrationToken, setIsLoadingIntegrationToken] = useState(false)
-  const API_BASE_URL = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || 'http://localhost:8000'
-
-  const systemOrderUrl = `${API_BASE_URL}/api/pedidos/`
+  // Usa base normalizada para evitar duplicações '/api/api'
+  const systemOrderUrl = `${API_BASE_URL}/pedidos/`
   const systemOrderExampleBody = {
     nome_cliente: 'Agente IA',
     itens: [
