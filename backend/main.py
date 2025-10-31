@@ -7,7 +7,7 @@ from models import User, Supermarket, Pedido, ItemPedido
 from models.user import User as UserModel
 from models.supermarket import SupermarketHistory
 from models.cliente import Cliente
-from routes import auth_router, supermarkets_router, pedidos_router
+from routes import auth_router, auth_alias_router, supermarkets_router, pedidos_router
 from routes.financeiro import router as financeiro_router
 from routes.clientes import router as clientes_router
 from auth.jwt_handler import get_password_hash
@@ -53,6 +53,7 @@ app.add_middleware(
 
 # Rotas principais
 app.include_router(auth_router)
+app.include_router(auth_alias_router)
 app.include_router(supermarkets_router)
 app.include_router(pedidos_router)
 app.include_router(financeiro_router)
