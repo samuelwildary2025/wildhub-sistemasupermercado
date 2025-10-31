@@ -151,53 +151,44 @@ const AdminDashboard = () => {
       <div className="p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Total Supermercados</p>
-                <p className="text-2xl font-bold text-white">{stats.totalSupermarkets}</p>
-              </div>
-              <Store className="text-blue-400" size={24} />
+          {/* Adicionando p-4 para espaçamento interno e text-center/flex-col para alinhamento */}
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <Store className="text-blue-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Total Supermercados</p>
+              <p className="text-2xl font-bold text-white dark:text-white">{stats.totalSupermarkets}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Ativos</p>
-                <p className="text-2xl font-bold text-green-400">{stats.activeSupermarkets}</p>
-              </div>
-              <Activity className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <Activity className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Ativos</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{stats.activeSupermarkets}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Total Pedidos</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.totalPedidos}</p>
-              </div>
-              <ShoppingBag className="text-purple-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <ShoppingBag className="text-purple-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Total Pedidos</p>
+              <p className="text-2xl font-bold text-purple-400 dark:text-purple-400">{stats.totalPedidos}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Receita Total</p>
-                <p className="text-2xl font-bold text-green-400">{formatCurrency(stats.totalRevenue)}</p>
-              </div>
-              <DollarSign className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <DollarSign className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Receita Total</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{formatCurrency(stats.totalRevenue)}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Ticket Médio</p>
-                <p className="text-2xl font-bold text-yellow-400">{formatCurrency(stats.avgOrderValue)}</p>
-              </div>
-              <TrendingUp className="text-yellow-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <TrendingUp className="text-yellow-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Ticket Médio</p>
+              <p className="text-2xl font-bold text-yellow-400 dark:text-yellow-400">{formatCurrency(stats.avgOrderValue)}</p>
             </div>
           </div>
         </div>
@@ -205,8 +196,8 @@ const AdminDashboard = () => {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue por Supermercado */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-white mb-4">Top Supermercados por Receita</h3>
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold text-white dark:text-white mb-4">Top Supermercados por Receita</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={getSupermarketData()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -216,6 +207,8 @@ const AdminDashboard = () => {
                   angle={-45}
                   textAnchor="end"
                   height={80}
+                  // Adicionado para modo claro
+                  className="text-dark-900 dark:text-gray-100" 
                 />
                 <YAxis stroke="#9CA3AF" />
                 <Tooltip 
@@ -235,8 +228,8 @@ const AdminDashboard = () => {
           </div>
 
           {/* Evolução Mensal */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-white mb-4">Evolução Mensal</h3>
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold text-white dark:text-white mb-4">Evolução Mensal</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={getMonthlyData()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -273,12 +266,13 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Supermarkets */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-white mb-4">Supermercados Recentes</h3>
+        <div className="card p-4">
+          <h3 className="text-lg font-semibold text-white dark:text-white mb-4">Supermercados Recentes</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-dark-700">
+                  {/* Adicionado padding para centralizar colunas */}
                   <th className="text-left py-3 px-4 text-dark-300">Nome</th>
                   <th className="text-left py-3 px-4 text-dark-300">Email</th>
                   <th className="text-left py-3 px-4 text-dark-300">Telefone</th>
@@ -290,7 +284,7 @@ const AdminDashboard = () => {
               <tbody>
                 {getRecentSupermarkets().map((supermarket) => (
                   <tr key={supermarket.id} className="border-b border-dark-800 hover:bg-dark-700">
-                    <td className="py-3 px-4 text-white font-medium">{getDisplayName(supermarket)}</td>
+                    <td className="py-3 px-4 text-white dark:text-white font-medium">{getDisplayName(supermarket)}</td>
                     <td className="py-3 px-4 text-dark-300">{supermarket.email || supermarket?.email}</td>
                     <td className="py-3 px-4 text-dark-300">{supermarket.telefone || supermarket.phone || ''}</td>
                     <td className="py-3 px-4">
