@@ -196,8 +196,8 @@ Obrigado pela preferência!`
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-dark-900">
-        <div className="text-white">Carregando...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark-900">
+        <div className="text-gray-900 dark:text-white">Carregando...</div>
       </div>
     )
   }
@@ -205,54 +205,70 @@ Obrigado pela preferência!`
   // Listas separadas
   const pendentesPedidos = pedidos.filter(p => p.status === 'pendente')
   const concluidosPedidos = pedidos.filter(p => p.status === 'faturado')
+  
+  // Componente de Card KPI reutilizável
+  const KpiCard = ({ title, value, icon: Icon, color }) => (
+    <div className="card p-4 hover:shadow-lg transition-shadow">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <p className="text-sm text-gray-500 dark:text-dark-400">{title}</p>
+          <p className={`text-2xl font-bold mt-1 ${color}`}>
+            {value}
+          </p>
+        </div>
+        <div className={`p-2 rounded-full ${color}/20 flex items-center justify-center`}>
+          <Icon className={color} size={24} />
+        </div>
+      </div>
+    </div>
+  )
+
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    // Removendo bg-dark-900 para permitir que AdminLayout controle o fundo
+    <div className="min-h-screen"> 
       <Header 
         title="Painel de Pedidos" 
         subtitle="Gerencie todos os pedidos do seu supermercado"
       />
 
       <div className="p-6">
-        {/* Stats Cards */}
+        {/* Stats Cards - Usando o novo KpiCard para melhorar a estética */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {/* Aplicando p-4 e text-center para melhorar a estética dos KPIs */}
-          <div className="card p-4 flex flex-col items-center text-center">
-            <div className="flex flex-col items-center justify-center w-full">
-              <TrendingUp className="text-blue-400 mb-2" size={24} />
-              <p className="text-dark-400 text-sm">Total de Pedidos</p>
-              <p className="text-2xl font-bold text-white dark:text-white">{stats.total}</p>
-            </div>
-          </div>
+          
+          <KpiCard 
+            title="Total de Pedidos" 
+            value={stats.total} 
+            icon={TrendingUp} 
+            color="text-blue-600 dark:text-blue-400"
+          />
 
-          <div className="card p-4 flex flex-col items-center text-center">
-            <div className="flex flex-col items-center justify-center w-full">
-              <Clock className="text-yellow-400 mb-2" size={24} />
-              <p className="text-dark-400 text-sm">Pendentes</p>
-              <p className="text-2xl font-bold text-yellow-400 dark:text-yellow-400">{stats.pendentes}</p>
-            </div>
-          </div>
+          <KpiCard 
+            title="Pendentes" 
+            value={stats.pendentes} 
+            icon={Clock} 
+            color="text-yellow-600 dark:text-yellow-400"
+          />
 
-          <div className="card p-4 flex flex-col items-center text-center">
-            <div className="flex flex-col items-center justify-center w-full">
-              <CheckCircle className="text-green-400 mb-2" size={24} />
-              <p className="text-dark-400 text-sm">Faturados</p>
-              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{stats.faturados}</p>
-            </div>
-          </div>
+          <KpiCard 
+            title="Faturados" 
+            value={stats.faturados} 
+            icon={CheckCircle} 
+            color="text-green-600 dark:text-green-400"
+          />
 
-          <div className="card p-4 flex flex-col items-center text-center">
-            <div className="flex flex-col items-center justify-center w-full">
-              <DollarSign className="text-green-400 mb-2" size={24} />
-              <p className="text-dark-400 text-sm">Valor Faturado</p>
-              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{formatCurrency(stats.valorTotal)}</p>
-            </div>
-          </div>
+          <KpiCard 
+            title="Valor Faturado" 
+            value={formatCurrency(stats.valorTotal)} 
+            icon={DollarSign} 
+            color="text-green-600 dark:text-green-400"
+          />
+
         </div>
 
         {/* Ações */}
         <div className="flex justify-end mb-6">
-          <button className="btn-primary flex items-center space-x-2">
+          <button className="button flex items-center space-x-2">
             <Plus size={20} />
             <span>Novo Pedido</span>
           </button>
@@ -261,10 +277,10 @@ Obrigado pela preferência!`
         {/* Duas Colunas: Em andamento x Concluídos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Em Andamento */}
-          {/* Adicionado p-4 para espaçamento interno */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white dark:text-white font-semibold">Pedidos em Andamento</h3>
+              {/* Ajuste de cor de texto para Modo Claro */}
+              <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos em Andamento</h3>
               <span className="text-sm text-yellow-400">{pendentesPedidos.length}</span>
             </div>
             {pendentesPedidos.length === 0 ? (
@@ -277,23 +293,24 @@ Obrigado pela preferência!`
                  return (
                    <div
                      key={pedido.id}
-                     className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-dark-800 hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-yellow-700/30 border-yellow-700'}`}
+                     // Ajustado para cores de card mais consistentes com o tema
+                     className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-gray-50 dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-yellow-700/30 border-gray-300 dark:border-dark-700'}`}
                    >
                      <div onClick={() => openDetails(pedido)} className="flex-1 cursor-pointer">
-                       <p className="text-white dark:text-white font-medium">{clienteNome}</p>
-                       <p className="text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR') : '-'}</p>
+                       <p className="text-gray-900 dark:text-white font-medium">{clienteNome}</p>
+                       <p className="text-gray-500 dark:text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR') : '-'}</p>
                      </div>
                      <div className="flex items-center gap-3">
-                       <span className="text-yellow-400 font-semibold">{formatCurrency(orderTotal(pedido))}</span>
+                       <span className="text-yellow-600 dark:text-yellow-400 font-semibold">{formatCurrency(orderTotal(pedido))}</span>
                        <button
                          onClick={(e) => { e.stopPropagation(); handleStatusChange(pedido.id, 'faturado') }}
-                         className="btn-secondary px-3 py-1 text-sm"
+                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded"
                        >
-                         Enviar para Faturamento
+                         Faturar
                        </button>
                        <button
                          onClick={(e) => { e.stopPropagation(); handlePrint(pedido) }}
-                         className="btn-secondary px-3 py-1 text-sm flex items-center gap-1"
+                         className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
                        >
                          <Printer size={16} /> Imprimir
                        </button>
@@ -308,7 +325,8 @@ Obrigado pela preferência!`
           {/* Concluídos */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white dark:text-white font-semibold">Pedidos Concluídos</h3>
+              {/* Ajuste de cor de texto para Modo Claro */}
+              <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
               <span className="text-sm text-green-400">{concluidosPedidos.length}</span>
             </div>
             {concluidosPedidos.length === 0 ? (
@@ -319,11 +337,8 @@ Obrigado pela preferência!`
                   <PedidoCard 
                     key={pedido.id}
                     pedido={pedido}
-                    // onMarkPending={() => handleStatusChange(pedido.id, 'pendente')} // Essa função deve ser passada se você quiser usá-la no card
+                    onStatusChange={handleStatusChange} // Garantindo que o status change está disponível
                     onOpen={() => openDetails(pedido)}
-                    // Passando helpers se PedidoCard precisa deles
-                    // orderTotal={orderTotal}
-                    // formatCurrency={formatCurrency}
                   />
                 ))}
               </div>
@@ -333,7 +348,6 @@ Obrigado pela preferência!`
 
         {/* Detalhes do Pedido (Modal) */}
         {showDetails && selectedPedido && (
-          // ... Código do Modal de Detalhes (inalterado) ...
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
             <div className="bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-dark-700 overflow-hidden">
               {/* Cabeçalho do modal */}
@@ -350,7 +364,8 @@ Obrigado pela preferência!`
                 {/* Coluna Esquerda */}
                 <div className="space-y-4 lg:col-span-2">
                   {/* Informações do Cliente */}
-                  <div className="bg-dark-900 rounded-lg p-4 border border-dark-700">
+                  {/* Ajustado: cores de fundo para o modal para manter coerência */}
+                  <div className="bg-dark-900 rounded-lg p-4 border border-dark-700"> 
                     <h4 className="text-white font-medium mb-3 flex items-center gap-2">
                       <Calendar size={18} className="text-dark-400" />
                       Informações do Cliente
@@ -409,7 +424,7 @@ Obrigado pela preferência!`
                   {selectedPedido?.status !== 'faturado' && (
                     <button
                       onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
-                      className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+                      className="w-full button flex items-center justify-center gap-2 py-3"
                     >
                       <CheckCircle size={18} />
                       Enviar para Faturamento
@@ -448,7 +463,7 @@ Obrigado pela preferência!`
                     />
                     <button
                       onClick={handleSendChat}
-                      className="btn-primary px-4 py-2"
+                      className="button px-4 py-2"
                       title="Enviar mensagem"
                     >
                       ➤
