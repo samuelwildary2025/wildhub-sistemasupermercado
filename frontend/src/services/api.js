@@ -2,9 +2,11 @@ import axios from 'axios'
 
 // === Configuração da URL base para container unificado ===
 // Usando '/api' para funcionar com proxy do Nginx no container unificado
-const API_BASE_URL = '/api'
+// Permite override via variável de ambiente se necessário
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 console.log('🔗 API_BASE_URL (Container Unificado) =', API_BASE_URL)
+console.log('🔧 VITE_API_BASE_URL from env =', import.meta.env.VITE_API_BASE_URL)
 console.log('🏠 Current origin =', window.location.origin)
 
 // === Instância principal do Axios ===
