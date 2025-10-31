@@ -19,7 +19,9 @@ export default defineConfig(({ command, mode }) => {
     define: {
       // Força a definição da variável se não estiver sendo carregada
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
-        env.VITE_API_BASE_URL || 'https://wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
+        // No deploy unificado, o frontend e backend compartilham o mesmo host.
+        // Portanto, o fallback deve ser relativo: '/api'.
+        env.VITE_API_BASE_URL || '/api'
       )
     }
   }
