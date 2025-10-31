@@ -1,13 +1,11 @@
 import axios from 'axios'
 
-// === Configuração dinâmica da URL base ===
-const DEFAULT_HOST = 'wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
+// === Configuração da URL base para container unificado ===
+// Usando '/api' para funcionar com proxy do Nginx no container unificado
+const API_BASE_URL = '/api'
 
-// HARDCODE HTTPS - Correção definitiva para resolver problema de HTTP
-const API_BASE_URL = 'https://wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
-
-console.log('🔗 API_BASE_URL HARDCODED =', API_BASE_URL)
-console.log('🔧 VITE_API_BASE_URL from env =', import.meta.env.VITE_API_BASE_URL)
+console.log('🔗 API_BASE_URL (Container Unificado) =', API_BASE_URL)
+console.log('🏠 Current origin =', window.location.origin)
 
 // === Instância principal do Axios ===
 const api = axios.create({
