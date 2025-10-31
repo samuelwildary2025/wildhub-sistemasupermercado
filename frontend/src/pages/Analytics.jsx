@@ -159,14 +159,24 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-dark-900">
-        <div className="text-white">Carregando...</div>
+      // Corrigindo para usar a paleta correta para o fundo do loading
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark-900">
+        <div className="text-gray-900 dark:text-white">Carregando...</div>
       </div>
     )
   }
 
+  // Define a cor do eixo baseada no modo de tema
+  const isDarkMode = window.document.documentElement.classList.contains('dark');
+  const axisStroke = isDarkMode ? '#9CA3AF' : '#1F2937'; // Cinza no Dark, Preto/Escuro no Light
+  const gridStroke = isDarkMode ? '#374151' : '#E5E7EB'; // Escuro no Dark, Cinza claro no Light
+  const textColor = isDarkMode ? 'white' : '#1F2937';
+  const tooltipBg = isDarkMode ? '#1F2937' : 'white';
+  const tooltipBorder = isDarkMode ? '#374151' : '#D1D5DB';
+
   return (
-    <div className="min-h-screen bg-dark-900">
+    // Removendo bg-dark-900 para permitir que AdminLayout controle o fundo
+    <div className="min-h-screen">
       <Header 
         title="Analytics" 
         subtitle="Análise detalhada das vendas e performance"
@@ -176,7 +186,7 @@ const Analytics = () => {
         {/* Time Range Selector */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-2">
-            <Calendar size={20} className="text-dark-400" />
+            <Calendar size={20} className="text-dark-400 dark:text-dark-400" />
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
@@ -190,45 +200,37 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Aplicando p-4 e alinhamento centralizado */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Total de Vendas</p>
-                <p className="text-2xl font-bold text-green-400">{formatCurrency(stats.totalVendas)}</p>
-              </div>
-              <DollarSign className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <DollarSign className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Total de Vendas</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{formatCurrency(stats.totalVendas)}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Total de Pedidos</p>
-                <p className="text-2xl font-bold text-blue-400">{stats.totalPedidos}</p>
-              </div>
-              <ShoppingBag className="text-blue-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <ShoppingBag className="text-blue-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Total de Pedidos</p>
+              <p className="text-2xl font-bold text-blue-400 dark:text-blue-400">{stats.totalPedidos}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Ticket Médio</p>
-                <p className="text-2xl font-bold text-purple-400">{formatCurrency(stats.ticketMedio)}</p>
-              </div>
-              <TrendingUp className="text-purple-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <TrendingUp className="text-purple-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Ticket Médio</p>
+              <p className="text-2xl font-bold text-purple-400 dark:text-purple-400">{formatCurrency(stats.ticketMedio)}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Crescimento</p>
-                <p className="text-2xl font-bold text-green-400">{stats.crescimento >= 0 ? '+' : ''}{stats.crescimento}%</p>
-              </div>
-              <TrendingUp className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <TrendingUp className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Crescimento</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{stats.crescimento >= 0 ? '+' : ''}{stats.crescimento}%</p>
             </div>
           </div>
         </div>
@@ -236,17 +238,18 @@ const Analytics = () => {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Vendas por Mês */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-white mb-4">Vendas por Período</h3>
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vendas por Período</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={getMonthlyData()}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="month" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
+                {/* Ajustado para usar as cores dinâmicas */}
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="month" stroke={axisStroke} tick={{ fill: textColor }} />
+                <YAxis stroke={axisStroke} tick={{ fill: textColor }} />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
+                    backgroundColor: tooltipBg, 
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: '8px'
                   }}
                   formatter={(value, name) => [
@@ -260,8 +263,8 @@ const Analytics = () => {
           </div>
 
           {/* Status dos Pedidos */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-white mb-4">Status dos Pedidos</h3>
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status dos Pedidos</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -270,7 +273,7 @@ const Analytics = () => {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => <text fill={textColor}>{`${name} ${(percent * 100).toFixed(0)}%`}</text>}
                 >
                   {getStatusData().map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -278,8 +281,8 @@ const Analytics = () => {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
+                    backgroundColor: tooltipBg, 
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: '8px'
                   }}
                 />
@@ -289,17 +292,18 @@ const Analytics = () => {
         </div>
 
         {/* Vendas Diárias */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-white mb-4">Vendas dos Últimos 7 Dias</h3>
+        <div className="card p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vendas dos Últimos 7 Dias</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={getDailyData()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="date" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
+              {/* Ajustado para usar as cores dinâmicas */}
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="date" stroke={axisStroke} tick={{ fill: textColor }} />
+              <YAxis stroke={axisStroke} tick={{ fill: textColor }} />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
+                  backgroundColor: tooltipBg, 
+                  border: `1px solid ${tooltipBorder}`,
                   borderRadius: '8px'
                 }}
                 formatter={(value, name) => [
