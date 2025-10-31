@@ -1,3 +1,10 @@
+// 🔇 Desativa logs em produção
+if (import.meta.env.MODE === 'production') {
+  console.log = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+}
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
