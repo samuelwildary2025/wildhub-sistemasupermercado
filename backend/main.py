@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
+# 🔧 Removido o ProxyHeadersMiddleware (incompatível nas versões atuais)
 from sqlalchemy.orm import Session
 from database import engine, get_db
 from sqlalchemy import text
@@ -13,7 +13,10 @@ from routes.financeiro import router as financeiro_router
 from routes.clientes import router as clientes_router
 from auth.jwt_handler import get_password_hash
 
-# Criar tabelas com tratamento de erro
+
+# ==========================================
+# 🔨 Criação automática das tabelas no banco
+# ==========================================
 try:
     print("🏗️  Criando tabelas no banco de dados...")
     UserModel.metadata.create_all(bind=engine)
@@ -28,17 +31,20 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 
-# Inicialização do FastAPI
+
+# ==========================================
+# 🚀 Inicialização do FastAPI
+# ==========================================
 app = FastAPI(
     title="Supermercado Queiroz - API",
     description="Sistema SaaS de Gestão de Pedidos para Supermercados",
     version="1.0.0"
 )
 
-# Honra cabeçalhos X-Forwarded-* vindos do proxy externo (HTTPS)
-app.add_middleware(ProxyHeadersMiddleware)
 
-# Configuração CORS - produção e local
+# ==========================================
+# 🌐 CORS (liberação de domínios do frontend)
+# ==========================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -46,7 +52,6 @@ app.add_middleware(
         "http://localhost:4173",
         "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
         "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
-        # Domínios de produção efetivamente utilizados pelo frontend
         "https://wildhub-sistema-supermercado.5mos1l.easypanel.host",
         "http://wildhub-sistema-supermercado.5mos1l.easypanel.host",
     ],
@@ -55,7 +60,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rotas principais
+
+# ==========================================
+# 🧩 Registro das rotas
+# ==========================================
 app.include_router(auth_router)
 app.include_router(auth_alias_router)
 app.include_router(supermarkets_router)
@@ -63,9 +71,17 @@ app.include_router(pedidos_router)
 app.include_router(financeiro_router)
 app.include_router(clientes_router)
 
+
+# ==========================================
+# 🔍 Rotas de debug e verificação
+# ==========================================
 @app.get("/")
 def read_root():
     return {"message": "Supermercado Queiroz API - Sistema SaaS de Gestão de Pedidos"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 @app.get("/debug/info")
 def debug_info():
@@ -75,39 +91,32 @@ def debug_info():
         "environment": os.getenv("ENVIRONMENT", "development"),
         "database_connected": True,
         "cors_enabled": True,
-        "allowed_origins": [
-            "http://localhost:5173",
-            "http://localhost:4173",
-            "https://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
-            "http://wildhub-frontend-sistema-super-mercado.5mos1l.easypanel.host",
-            "https://wildhub-sistema-supermercado.5mos1l.easypanel.host",
-            "http://wildhub-sistema-supermercado.5mos1l.easypanel.host",
-        ]
     }
 
 @app.get("/debug/routes")
 def debug_routes():
     return {
-        "routes_loaded": ["auth", "supermarkets", "pedidos", "clientes", "financeiro"],
-        "routes_failed": [],
         "total_routes": len(app.routes),
         "route_paths": [route.path for route in app.routes]
     }
 
+
+# ==========================================
+# ⚙️ Evento de inicialização (startup)
+# ==========================================
 @app.on_event("startup")
 async def startup_event():
     print("🚀 API iniciada com sucesso!")
     import os
-    from sqlalchemy.orm import Session
-    
+
     admin_email = os.getenv("ADMIN_EMAIL", "admin@admin.com")
     admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
     admin_name = os.getenv("ADMIN_NAME", "Administrador")
-    
+
     try:
         db = next(get_db())
         admin_user = db.query(UserModel).filter(UserModel.email == admin_email).first()
-        
+
         if not admin_user:
             print(f"👤 Criando usuário admin: {admin_email}")
             admin_user = UserModel(
@@ -130,6 +139,10 @@ async def startup_event():
     for route in app.routes:
         print(f"  {route.methods} {route.path}")
 
+
+# ==========================================
+# 🔥 Execução local (modo standalone)
+# ==========================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=80)
