@@ -1,9 +1,13 @@
 import axios from 'axios'
 
-// === Configuração da URL base para container unificado ===
-// Usando '/api' para funcionar com proxy do Nginx no container unificado
-// Permite override via variável de ambiente se necessário
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+// === Configuração da URL base ===
+// Normaliza para sempre incluir o sufixo '/api' quando VITE_API_BASE_URL estiver definido
+// Ex.: 'https://backend.example.com' -> 'https://backend.example.com/api'
+//      '/api' (proxy local/unificado) permanece como '/api'
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE_URL = RAW_BASE_URL.endsWith('/api')
+  ? RAW_BASE_URL
+  : `${RAW_BASE_URL.replace(/\/$/, '')}/api`
 
 console.log('🔗 API_BASE_URL (Container Unificado) =', API_BASE_URL)
 console.log('🔧 VITE_API_BASE_URL from env =', import.meta.env.VITE_API_BASE_URL)
@@ -20,7 +24,7 @@ const api = axios.create({
 // Interceptor de requisição - adiciona token e logs detalhados
 api.interceptors.request.use(
   (config) => {
-    console.log('🚀 Fazendo requisição para:', config.baseURL + config.url)
+    console.log('🚀 Fazendo requisição para:', (config.baseURL || '') + (config.url || ''))
     console.log('🔧 Config completa:', config)
     
     const token =
