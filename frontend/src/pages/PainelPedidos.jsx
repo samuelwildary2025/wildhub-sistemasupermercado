@@ -216,43 +216,36 @@ Obrigado pela preferência!`
       <div className="p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Total de Pedidos</p>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
-              </div>
-              <TrendingUp className="text-blue-400" size={24} />
+          {/* Aplicando p-4 e text-center para melhorar a estética dos KPIs */}
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <TrendingUp className="text-blue-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Total de Pedidos</p>
+              <p className="text-2xl font-bold text-white dark:text-white">{stats.total}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-400">{stats.pendentes}</p>
-              </div>
-              <Clock className="text-yellow-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <Clock className="text-yellow-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Pendentes</p>
+              <p className="text-2xl font-bold text-yellow-400 dark:text-yellow-400">{stats.pendentes}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Faturados</p>
-                <p className="text-2xl font-bold text-green-400">{stats.faturados}</p>
-              </div>
-              <CheckCircle className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <CheckCircle className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Faturados</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{stats.faturados}</p>
             </div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dark-400 text-sm">Valor Faturado</p>
-                <p className="text-2xl font-bold text-green-400">{formatCurrency(stats.valorTotal)}</p>
-              </div>
-              <DollarSign className="text-green-400" size={24} />
+          <div className="card p-4 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center justify-center w-full">
+              <DollarSign className="text-green-400 mb-2" size={24} />
+              <p className="text-dark-400 text-sm">Valor Faturado</p>
+              <p className="text-2xl font-bold text-green-400 dark:text-green-400">{formatCurrency(stats.valorTotal)}</p>
             </div>
           </div>
         </div>
@@ -268,9 +261,10 @@ Obrigado pela preferência!`
         {/* Duas Colunas: Em andamento x Concluídos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Em Andamento */}
-          <div className="card">
+          {/* Adicionado p-4 para espaçamento interno */}
+          <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">Pedidos em Andamento</h3>
+              <h3 className="text-white dark:text-white font-semibold">Pedidos em Andamento</h3>
               <span className="text-sm text-yellow-400">{pendentesPedidos.length}</span>
             </div>
             {pendentesPedidos.length === 0 ? (
@@ -286,7 +280,7 @@ Obrigado pela preferência!`
                      className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-dark-800 hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-yellow-700/30 border-yellow-700'}`}
                    >
                      <div onClick={() => openDetails(pedido)} className="flex-1 cursor-pointer">
-                       <p className="text-white font-medium">{clienteNome}</p>
+                       <p className="text-white dark:text-white font-medium">{clienteNome}</p>
                        <p className="text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR') : '-'}</p>
                      </div>
                      <div className="flex items-center gap-3">
@@ -312,9 +306,9 @@ Obrigado pela preferência!`
           </div>
 
           {/* Concluídos */}
-          <div className="card">
+          <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">Pedidos Concluídos</h3>
+              <h3 className="text-white dark:text-white font-semibold">Pedidos Concluídos</h3>
               <span className="text-sm text-green-400">{concluidosPedidos.length}</span>
             </div>
             {concluidosPedidos.length === 0 ? (
@@ -325,10 +319,11 @@ Obrigado pela preferência!`
                   <PedidoCard 
                     key={pedido.id}
                     pedido={pedido}
-                    onMarkPending={() => handleStatusChange(pedido.id, 'pendente')}
+                    // onMarkPending={() => handleStatusChange(pedido.id, 'pendente')} // Essa função deve ser passada se você quiser usá-la no card
                     onOpen={() => openDetails(pedido)}
-                    orderTotal={orderTotal}
-                    formatCurrency={formatCurrency}
+                    // Passando helpers se PedidoCard precisa deles
+                    // orderTotal={orderTotal}
+                    // formatCurrency={formatCurrency}
                   />
                 ))}
               </div>
@@ -336,8 +331,9 @@ Obrigado pela preferência!`
           </div>
         </div>
 
-        {/* Detalhes do Pedido */}
+        {/* Detalhes do Pedido (Modal) */}
         {showDetails && selectedPedido && (
+          // ... Código do Modal de Detalhes (inalterado) ...
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
             <div className="bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-dark-700 overflow-hidden">
               {/* Cabeçalho do modal */}
