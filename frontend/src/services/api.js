@@ -3,12 +3,11 @@ import axios from 'axios'
 // === Configuração dinâmica da URL base ===
 const DEFAULT_HOST = 'wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
 
-// Força HTTPS para produção - correção definitiva
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `https://${DEFAULT_HOST}`
+// HARDCODE HTTPS - Correção definitiva para resolver problema de HTTP
+const API_BASE_URL = 'https://wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
 
-console.log('🔗 API_BASE_URL =', API_BASE_URL)
+console.log('🔗 API_BASE_URL HARDCODED =', API_BASE_URL)
 console.log('🔧 VITE_API_BASE_URL from env =', import.meta.env.VITE_API_BASE_URL)
-console.log('🌐 Current protocol =', typeof window !== 'undefined' ? window.location.protocol : 'N/A')
 
 // === Instância principal do Axios ===
 const api = axios.create({
@@ -18,9 +17,12 @@ const api = axios.create({
 
 // === Interceptores ===
 
-// Adiciona token JWT automaticamente nas requisições
+// Interceptor de requisição - adiciona token e logs detalhados
 api.interceptors.request.use(
   (config) => {
+    console.log('🚀 Fazendo requisição para:', config.baseURL + config.url)
+    console.log('🔧 Config completa:', config)
+    
     const token =
       (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('token')) ||
       (typeof localStorage !== 'undefined' && localStorage.getItem('token'))
@@ -29,7 +31,10 @@ api.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('❌ Erro no interceptor de requisição:', error)
+    return Promise.reject(error)
+  }
 )
 
 // Intercepta erros de autenticação (401) e de rede
@@ -112,6 +117,8 @@ export const getPedidos = (status = null, tenantId = null) => {
 export const createPedido = (pedido) => api.post('/api/pedidos', pedido)
 
 export const createPedidoWithCustomToken = (pedido, customToken) => {
+  console.log('🔧 createPedidoWithCustomToken usando API_BASE_URL:', API_BASE_URL)
+  
   const customAxios = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -119,6 +126,9 @@ export const createPedidoWithCustomToken = (pedido, customToken) => {
       Authorization: `Bearer ${customToken}`,
     },
   })
+  
+  console.log('🚀 customAxios baseURL:', customAxios.defaults.baseURL)
+  
   return customAxios.post('/api/pedidos', pedido)
 }
 

@@ -1,12 +1,26 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0',
-    port: 4173,
-    strictPort: true
+export default defineConfig(({ command, mode }) => {
+  // Carrega variáveis de ambiente
+  const env = loadEnv(mode, process.cwd(), '')
+  
+  console.log('🔧 Vite mode:', mode)
+  console.log('🔧 VITE_API_BASE_URL from loadEnv:', env.VITE_API_BASE_URL)
+  
+  return {
+    plugins: [react()],
+    server: {
+      host: '0.0.0.0',
+      port: 4173,
+      strictPort: true
+    },
+    define: {
+      // Força a definição da variável se não estiver sendo carregada
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
+        env.VITE_API_BASE_URL || 'https://wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
+      )
+    }
   }
 })
