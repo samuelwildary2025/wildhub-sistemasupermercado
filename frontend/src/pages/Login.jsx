@@ -47,33 +47,37 @@ const Login = ({ onLogin }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+    // CORRIGIDO: Fundo da página agora é responsivo
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900 px-4">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
             <ShoppingCart size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">Wildhub</h1>
-          <p className="text-dark-400 mt-2">Sistema de Gestão de Pedidos</p>
+          {/* CORRIGIDO: Cor do título e subtítulo */}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Wildhub</h1>
+          <p className="text-gray-600 dark:text-dark-400 mt-2">Sistema de Gestão de Pedidos</p>
         </div>
 
         {/* Form */}
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="flex items-center space-x-2 p-3 bg-red-900/50 border border-red-700 rounded-lg">
-                <AlertCircle size={20} className="text-red-400" />
-                <span className="text-red-400 text-sm">{String(error)}</span>
+              <div className="flex items-center space-x-2 p-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 rounded-lg">
+                <AlertCircle size={20} className="text-red-600 dark:text-red-400" />
+                <span className="text-red-800 dark:text-red-400 text-sm">{String(error)}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-2">
+              {/* CORRIGIDO: Cor do Label */}
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-300 mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400" />
+                {/* CORRIGIDO: Cor do Ícone */}
+                <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-400" />
                 <input
                   type="email"
                   name="email"
@@ -87,11 +91,13 @@ const Login = ({ onLogin }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-dark-300 mb-2">
+              {/* CORRIGIDO: Cor do Label */}
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-300 mb-2">
                 Senha
               </label>
               <div className="relative">
-                <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400" />
+                {/* CORRIGIDO: Cor do Ícone */}
+                <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-400" />
                 <input
                   type="password"
                   name="password"
@@ -111,25 +117,29 @@ const Login = ({ onLogin }) => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 bg-dark-800 border-dark-600 rounded focus:ring-blue-500"
+                  // CORRIGIDO: Checkbox visível no modo claro
+                  className="h-4 w-4 text-blue-600 bg-white border-gray-400 rounded focus:ring-blue-500 dark:bg-dark-800 dark:border-dark-600"
                 />
-                <span className="ml-2 text-sm text-dark-300">Manter conectado</span>
+                {/* CORRIGIDO: Cor do texto da opção */}
+                <span className="ml-2 text-sm text-gray-700 dark:text-dark-300">Manter conectado</span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              // Alterado para usar a classe `button` ou `btn-primary` para consistência
+              className="button w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-dark-700 rounded-lg">
-            <h3 className="text-sm font-medium text-white mb-2">Credenciais de Teste:</h3>
-            <div className="text-xs text-dark-300 space-y-1">
+          {/* CORRIGIDO: Fundo e texto responsivos */}
+          <div className="mt-6 p-4 bg-gray-100 dark:bg-dark-700 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Credenciais de Teste:</h3>
+            <div className="text-xs text-gray-600 dark:text-dark-300 space-y-1">
               <p><strong>Admin:</strong> admin@admin.com / admin123</p>
               <p><strong>Cliente:</strong> Crie um supermercado primeiro</p>
             </div>
