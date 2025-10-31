@@ -1,10 +1,7 @@
 import axios from 'axios'
 
-// === Configuração dinâmica da URL base ===
-const DEFAULT_HOST = 'wildhub-backend-sistema-super-mercado.5mos1l.easypanel.host'
-
-// Força HTTPS para produção - correção definitiva
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `https://${DEFAULT_HOST}`
+// Dentro do mesmo container / proxy local Nginx
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 console.log('🔗 API_BASE_URL =', API_BASE_URL)
 console.log('🔧 VITE_API_BASE_URL from env =', import.meta.env.VITE_API_BASE_URL)
