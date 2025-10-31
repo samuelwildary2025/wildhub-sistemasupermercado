@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlalchemy.orm import Session
 from database import engine, get_db
 from sqlalchemy import text
@@ -33,6 +34,9 @@ app = FastAPI(
     description="Sistema SaaS de Gestão de Pedidos para Supermercados",
     version="1.0.0"
 )
+
+# Honra cabeçalhos X-Forwarded-* vindos do proxy externo (HTTPS)
+app.add_middleware(ProxyHeadersMiddleware)
 
 # Configuração CORS - produção e local
 app.add_middleware(
