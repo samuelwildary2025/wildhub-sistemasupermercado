@@ -206,7 +206,7 @@ Obrigado pela preferência!`
   const pendentesPedidos = pedidos.filter(p => p.status === 'pendente')
   const concluidosPedidos = pedidos.filter(p => p.status === 'faturado')
   
-  // Componente de Card KPI reutilizável
+  // Componente de Card KPI reutilizável (Ajustado para o Painel de Pedidos)
   const KpiCard = ({ title, value, icon: Icon, color }) => (
     <div className="card p-4 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between">
@@ -279,12 +279,11 @@ Obrigado pela preferência!`
           {/* Em Andamento */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              {/* Ajuste de cor de texto para Modo Claro */}
               <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos em Andamento</h3>
-              <span className="text-sm text-yellow-400">{pendentesPedidos.length}</span>
+              <span className="text-sm text-yellow-600 dark:text-yellow-400">{pendentesPedidos.length}</span>
             </div>
             {pendentesPedidos.length === 0 ? (
-              <p className="text-dark-400">Nenhum pedido pendente.</p>
+              <p className="text-gray-500 dark:text-dark-400">Nenhum pedido pendente.</p>
             ) : (
             <div className="space-y-3">
                {pendentesPedidos.map((pedido) => {
@@ -293,8 +292,8 @@ Obrigado pela preferência!`
                  return (
                    <div
                      key={pedido.id}
-                     // Ajustado para cores de card mais consistentes com o tema
-                     className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-gray-50 dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-yellow-700/30 border-gray-300 dark:border-dark-700'}`}
+                     // CORRIGIDO: Aplicando cores de fundo e texto Light/Dark mais coerentes
+                     className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-transparent border-gray-300 dark:border-dark-700'}`}
                    >
                      <div onClick={() => openDetails(pedido)} className="flex-1 cursor-pointer">
                        <p className="text-gray-900 dark:text-white font-medium">{clienteNome}</p>
@@ -304,13 +303,13 @@ Obrigado pela preferência!`
                        <span className="text-yellow-600 dark:text-yellow-400 font-semibold">{formatCurrency(orderTotal(pedido))}</span>
                        <button
                          onClick={(e) => { e.stopPropagation(); handleStatusChange(pedido.id, 'faturado') }}
-                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded"
+                         className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded"
                        >
                          Faturar
                        </button>
                        <button
                          onClick={(e) => { e.stopPropagation(); handlePrint(pedido) }}
-                         className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+                         className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center gap-1"
                        >
                          <Printer size={16} /> Imprimir
                        </button>
@@ -325,19 +324,18 @@ Obrigado pela preferência!`
           {/* Concluídos */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              {/* Ajuste de cor de texto para Modo Claro */}
               <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
-              <span className="text-sm text-green-400">{concluidosPedidos.length}</span>
+              <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
             </div>
             {concluidosPedidos.length === 0 ? (
-              <p className="text-dark-400">Nenhum pedido concluído.</p>
+              <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído.</p>
             ) : (
               <div className="space-y-3">
                 {concluidosPedidos.map((pedido) => (
                   <PedidoCard 
                     key={pedido.id}
                     pedido={pedido}
-                    onStatusChange={handleStatusChange} // Garantindo que o status change está disponível
+                    onStatusChange={handleStatusChange} 
                     onOpen={() => openDetails(pedido)}
                   />
                 ))}
@@ -349,13 +347,13 @@ Obrigado pela preferência!`
         {/* Detalhes do Pedido (Modal) */}
         {showDetails && selectedPedido && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
-            <div className="bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-dark-700 overflow-hidden">
+            <div className="bg-white dark:bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 overflow-hidden">
               {/* Cabeçalho do modal */}
-              <div className="flex items-center justify-between p-4 border-b border-dark-700">
-                <h3 className="text-white font-semibold text-lg">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-700">
+                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
                   {`Pedido de ${selectedPedido?.cliente_nome || selectedPedido?.nome_cliente || selectedPedido?.client_name || 'Cliente'}`}
                 </h3>
-                <button className="text-dark-400 hover:text-white" onClick={closeDetails}>
+                <button className="text-gray-500 dark:text-dark-400 hover:text-gray-900 dark:hover:text-white" onClick={closeDetails}>
                   <X size={20} />
                 </button>
               </div>
@@ -364,31 +362,30 @@ Obrigado pela preferência!`
                 {/* Coluna Esquerda */}
                 <div className="space-y-4 lg:col-span-2">
                   {/* Informações do Cliente */}
-                  {/* Ajustado: cores de fundo para o modal para manter coerência */}
-                  <div className="bg-dark-900 rounded-lg p-4 border border-dark-700"> 
-                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Calendar size={18} className="text-dark-400" />
+                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700"> 
+                    <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+                      <Calendar size={18} className="text-gray-500 dark:text-dark-400" />
                       Informações do Cliente
                     </h4>
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-start gap-2 text-dark-200">
-                        <Phone size={16} className="mt-0.5 text-dark-400" />
+                      <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+                        <Phone size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
                         <span>{selectedPedido?.telefone || selectedPedido?.phone || '—'}</span>
                       </div>
-                      <div className="flex items-start gap-2 text-dark-200">
-                        <MapPin size={16} className="mt-0.5 text-dark-400" />
+                      <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+                        <MapPin size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
                         <span>{selectedPedido?.endereco || selectedPedido?.address || '—'}</span>
                       </div>
-                      <div className="flex items-start gap-2 text-dark-200">
-                        <CreditCard size={16} className="mt-0.5 text-dark-400" />
+                      <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+                        <CreditCard size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
                         <span>{selectedPedido?.forma || selectedPedido?.payment_method || '—'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Itens do Pedido */}
-                  <div className="bg-dark-900 rounded-lg p-4 border border-dark-700">
-                    <h4 className="text-white font-medium mb-3">Itens do Pedido</h4>
+                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700">
+                    <h4 className="text-gray-900 dark:text-white font-medium mb-3">Itens do Pedido</h4>
                     <div className="space-y-2">
                       {(Array.isArray(selectedPedido?.itens) ? selectedPedido?.itens : selectedPedido?.items || []).map((item, idx) => {
                         const nome = item?.nome_produto || item?.product_name || 'Item'
@@ -396,27 +393,27 @@ Obrigado pela preferência!`
                         const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
                         const subtotal = qtd * unit
                         return (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-dark-800 rounded border border-dark-700">
+                          <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
                             <div>
-                              <p className="text-white">{nome}</p>
-                              <p className="text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
+                              <p className="text-gray-900 dark:text-white">{nome}</p>
+                              <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
                             </div>
-                            <div className="text-white">{formatCurrency(subtotal)}</div>
+                            <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
                           </div>
                         )
                       })}
                     </div>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="text-white/80 font-medium">Total</span>
-                      <span className="text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
+                      <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
+                      <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
                     </div>
                   </div>
 
                   {/* Observações */}
                   {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
-                    <div className="rounded-lg p-4 border bg-amber-800/30 border-amber-700/40">
-                      <h4 className="text-white font-medium mb-2">Observações</h4>
-                      <p className="text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
+                    <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
+                      <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
+                      <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
                     </div>
                   )}
 
@@ -433,21 +430,21 @@ Obrigado pela preferência!`
                 </div>
 
                 {/* Coluna Direita - Chat */}
-                <div className="bg-dark-900 rounded-lg p-4 border border-dark-700 flex flex-col">
-                  <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                    <MessageSquare size={18} className="text-dark-400" />
+                <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
+                  <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+                    <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
                     Chat com Cliente
                   </h4>
-                  <div className="flex-1 rounded bg-dark-800 border border-dark-700 p-3 overflow-y-auto">
+                  <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
                     {chatMessages.length === 0 ? (
-                      <div className="flex items-center gap-2 text-dark-300 text-sm">
-                        <Check size={16} className="text-green-400" />
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
+                        <Check size={16} className="text-green-600 dark:text-green-400" />
                         Nenhuma mensagem ainda
                       </div>
                     ) : (
                       <div className="space-y-2">
                         {chatMessages.map((m) => (
-                          <div key={m.id} className="bg-dark-700 text-dark-100 text-sm p-2 rounded">{m.text}</div>
+                          <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
                         ))}
                       </div>
                     )}
