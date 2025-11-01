@@ -61,7 +61,8 @@ const Login = ({ onLogin }) => {
         </div>
 
         {/* Form */}
-        <div className="card">
+        {/* CORRIGIDO: Adicionado padding p-6 para espaçamento interno */}
+        <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="flex items-center space-x-2 p-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 rounded-lg">
