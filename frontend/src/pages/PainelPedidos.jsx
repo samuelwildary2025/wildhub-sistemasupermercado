@@ -171,7 +171,7 @@ const PainelPedidos = () => {
     setChatInput('')
   }
 
-  // CORREÇÃO DA FUNÇÃO HANDLEPRINT
+  // FUNÇÃO CORRIGIDA E COMPLETA PARA IMPRESSÃO
   const handlePrint = (pedido) => {
     // 1. Extrair e garantir dados do cliente/pedido
     const clienteNome = pedido?.cliente_nome || pedido?.nome_cliente || pedido?.client_name || 'Cliente Desconhecido';
@@ -246,7 +246,7 @@ Obrigado pela preferência!
         <div className={`p-2 rounded-full ${color}/20 flex items-center justify-center`}>
           <Icon className={color} size={24} />
         </div>
-      </div>
+       </div>
     </div>
   )
 
@@ -417,91 +417,91 @@ Obrigado pela preferência!
                     <div className="space-y-2">
                       {(Array.isArray(selectedPedido?.itens) ? selectedPedido?.itens : selectedPedido?.items || []).map((item, idx) => {
                         const nome = item?.nome_produto || item?.product_name || 'Item'
-                        const qtd = Number(item?.quantidade ?? item?.quantity) || 0
-                        const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
-                        const subtotal = qtd * unit
-                        return (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
-                            <div>
-                              <p className="text-gray-900 dark:text-white">{nome}</p>
-                              <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
-                            </div>
-                            <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
-                      <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
-                    </div>
-                  </div>
+    147.                 const qtd = Number(item?.quantidade ?? item?.quantity) || 0
+    148.                 const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
+    149.                 const subtotal = qtd * unit
+    150.                 return (
+    151.                   <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
+    152.                     <div>
+    153.                       <p className="text-gray-900 dark:text-white">{nome}</p>
+    154.                       <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
+    155.                     </div>
+    156.                     <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
+    157.                   </div>
+    158.                 )
+    159.               })}
+    160.             </div>
+    161.             <div className="flex items-center justify-between mt-3">
+    162.               <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
+    163.               <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
+    164.             </div>
+    165.            </div>
 
-                  {/* Observações */}
-                  {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
-                    <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
-                      <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
-                      <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
-                    </div>
-                  )}
+    167.            {/* Observações */}
+    168.            {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
+    169.               <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
+    170.                 <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
+    171.                 <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
+    172.               </div>
+    173.             )}
 
-                  {/* Ação */}
-                  {selectedPedido?.status !== 'faturado' && (
-                    <button
-                      onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
-                      className="w-full button flex items-center justify-center gap-2 py-3"
-                    >
-                      <CheckCircle size={18} />
-                      Enviar para Faturamento
-                    </button>
-                  )}
-                </div>
+    175.            {/* Ação */}
+    176.            {selectedPedido?.status !== 'faturado' && (
+    177.               <button
+    178.                 onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
+    179.                 className="w-full button flex items-center justify-center gap-2 py-3"
+    180.               >
+    181.                 <CheckCircle size={18} />
+    182.                 Enviar para Faturamento
+    183.               </button>
+    184.             )}
+    185.            </div>
 
-                {/* Coluna Direita - Chat */}
-                <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
-                  <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
-                    <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
-    166.             Chat com Cliente
-    167.             </h4>
-    168.             <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
-    169.               {chatMessages.length === 0 ? (
-    170.                 <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
-    171.                   <Check size={16} className="text-green-600 dark:text-green-400" />
-    172.                   Nenhuma mensagem ainda
-    173.                 </div>
-    174.               ) : (
-    175.                 <div className="space-y-2">
-    176.                   {chatMessages.map((m) => (
-    177.                     <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
-    178.                   ))}
-    179.                 </div>
-    180.               )}
-    181.             </div>
+    187.            {/* Coluna Direita - Chat */}
+    188.            <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
+    189.               <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+    190.                 <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
+    191.                 Chat com Cliente
+    192.               </h4>
+    193.               <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
+    194.                 {chatMessages.length === 0 ? (
+    195.                   <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
+    196.                     <Check size={16} className="text-green-600 dark:text-green-400" />
+    197.                     Nenhuma mensagem ainda
+    198.                   </div>
+    199.                 ) : (
+    200.                   <div className="space-y-2">
+    201.                     {chatMessages.map((m) => (
+    202.                       <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
+    203.                     ))}
+    204.                   </div>
+    205.                 )}
+    206.               </div>
 
-    183.             <div className="mt-3 flex items-center gap-2">
-    184.               <input
-    185.                 value={chatInput}
-    186.                 onChange={(e) => setChatInput(e.target.value)}
-    187.                 onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
-    188.                 className="input flex-1"
-    189.                 placeholder="Digite sua mensagem..."
-    190.               />
-    191.               <button
-    192.                 onClick={handleSendChat}
-    193.                 className="button px-4 py-2"
-    194.                 title="Enviar mensagem"
-    195.               >
-    196.                 ➤
-    197.               </button>
-    198.             </div>
-    199.             </div>
-    200.           </div>
-    201.           </div>
-    202.         )}
+    208.             <div className="mt-3 flex items-center gap-2">
+    209.               <input
+    210.                 value={chatInput}
+    211.                 onChange={(e) => setChatInput(e.target.value)}
+    212.                 onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
+    213.                 className="input flex-1"
+    214.                 placeholder="Digite sua mensagem..."
+    215.               />
+    216.               <button
+    217.                 onClick={handleSendChat}
+    218.                 className="button px-4 py-2"
+    219.                 title="Enviar mensagem"
+    220.               >
+    221.                 ➤
+    222.               </button>
+    223.             </div>
+    224.            </div>
+    225.           </div>
+    226.           </div>
+    227.         )}
 
-    204.       </div>
-    205.     </div>
-    206.   )
-    207. }
+    229.       </div>
+    230.     </div>
+    231.   )
+    232. }
 
-    209. export default PainelPedidos
+    234. export default PainelPedidos
