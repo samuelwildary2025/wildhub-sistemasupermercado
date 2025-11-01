@@ -56,6 +56,8 @@ def create_pedido(
             create_kwargs["endereco"] = pedido.endereco
         if getattr(pedido, "observacao", None) is not None:
             create_kwargs["observacao"] = pedido.observacao
+        if getattr(pedido, "telefone", None) is not None: # <-- NOVO: Adicionando telefone
+            create_kwargs["telefone"] = pedido.telefone     # <-- NOVO
         if getattr(pedido, "created_at", None) is not None:
             # Mapeia created_at -> data_pedido
             create_kwargs["data_pedido"] = pedido.created_at
@@ -113,6 +115,7 @@ def create_pedido(
                 "forma": getattr(created, "forma", None),
                 "endereco": getattr(created, "endereco", None),
                 "observacao": getattr(created, "observacao", None),
+                "telefone": getattr(created, "telefone", None), # <-- ADICIONADO AQUI
                 "data_pedido": getattr(created, "data_pedido", None).isoformat() if getattr(created, "data_pedido", None) else None,
             },
             success=True,
@@ -199,7 +202,7 @@ def update_pedido(
     pedido = query.first()
     if not pedido:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado")
-    before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total}
+    before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total, "telefone": pedido.telefone} # <-- ADICIONADO TELEFONE
     update_data = pedido_update.dict(exclude_unset=True)
     try:
         # Aplicar alterações e efetivar
@@ -212,7 +215,7 @@ def update_pedido(
         if not refreshed:
             log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=update_data, success=False, message="Pedido desapareceu após update")
             raise HTTPException(status_code=500, detail="Falha ao atualizar pedido")
-        log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total}, success=True)
+        log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total, "telefone": refreshed.telefone}, success=True) # <-- ADICIONADO TELEFONE
         return refreshed
     except HTTPException:
         raise
