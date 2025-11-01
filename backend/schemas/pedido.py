@@ -45,6 +45,7 @@ class PedidoCreate(BaseModel):
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
+    telefone: Optional[str] = None # <-- NOVO: Adicionado para receber o telefone
     # created_at será mapeado para data_pedido
     created_at: Optional[datetime] = None
     # total do pedido para validação cruzada (opcional)
@@ -78,6 +79,7 @@ class PedidoResponse(BaseModel):
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
+    telefone: Optional[str] = None # <-- NOVO: Adicionado para incluir o telefone na resposta da API
     itens: List[ItemPedidoResponse]
     
     class Config:
