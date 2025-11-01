@@ -7,6 +7,10 @@ const Login = ({ onLogin }) => {
     email: '',
     password: ''
   })
+  // Novos estados para rastrear o foco
+  const [isEmailFocused, setIsEmailFocused] = useState(false)
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false)
+
   const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -46,6 +50,10 @@ const Login = ({ onLogin }) => {
     }
   }
 
+  // Condições para mostrar os ícones (apenas se não focado E vazio)
+  const showEmailIcon = !isEmailFocused && formData.email.length === 0;
+  const showPasswordIcon = !isPasswordFocused && formData.password.length === 0;
+
   return (
     // Fundo da página responsivo
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900 px-4">
@@ -77,8 +85,8 @@ const Login = ({ onLogin }) => {
                 Email
               </label>
               <div className="relative">
-                {/* CORRIGIDO: Ícone só aparece se o campo estiver vazio */}
-                {formData.email.length === 0 && (
+                {/* CORRIGIDO: Ícone só aparece se o campo não estiver focado E estiver vazio */}
+                {showEmailIcon && (
                   <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 )}
                 <input
@@ -86,9 +94,10 @@ const Login = ({ onLogin }) => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
-                  className={`input w-full ${formData.email.length === 0 ? 'pl-10' : ''}`}
-                  placeholder=""
+                  onFocus={() => setIsEmailFocused(true)} 
+                  onBlur={() => setIsEmailFocused(false)}  
+                  // CORRIGIDO: Padding aplicado nas mesmas condições do ícone E placeholder removido
+                  className={`input w-full ${showEmailIcon ? 'pl-10' : ''}`}
                   required
                 />
               </div>
@@ -100,8 +109,8 @@ const Login = ({ onLogin }) => {
                 Senha
               </label>
               <div className="relative">
-                {/* CORRIGIDO: Ícone só aparece se o campo estiver vazio */}
-                {formData.password.length === 0 && (
+                {/* CORRIGIDO: Ícone só aparece se o campo não estiver focado E estiver vazio */}
+                {showPasswordIcon && (
                   <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 )}
                 <input
@@ -109,9 +118,10 @@ const Login = ({ onLogin }) => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
-                  className={`input w-full ${formData.password.length === 0 ? 'pl-10' : ''}`}
-                  placeholder=""
+                  onFocus={() => setIsPasswordFocused(true)} 
+                  onBlur={() => setIsPasswordFocused(false)}  
+                  // CORRIGIDO: Padding aplicado nas mesmas condições do ícone E placeholder removido
+                  className={`input w-full ${showPasswordIcon ? 'pl-10' : ''}`}
                   required
                 />
               </div>
