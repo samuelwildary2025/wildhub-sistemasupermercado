@@ -26,8 +26,9 @@ export default function Sidebar({ user, onLogout }) {
 
   return (
     <aside
+      // CORRIGIDO: Trocado min-h-screen por h-full
       className={`bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-dark-700 
-                  ${isCollapsed ? 'w-20' : 'w-64'} min-h-screen flex flex-col transition-all duration-300`}
+                  ${isCollapsed ? 'w-20' : 'w-64'} h-full flex flex-col transition-all duration-300`}
     >
       {/* Header da Sidebar */}
       <div className="p-4 border-b border-gray-200 dark:border-dark-700 flex items-center justify-between">
@@ -75,7 +76,7 @@ export default function Sidebar({ user, onLogout }) {
         ))}
       </nav>
 
-      {/* Rodapé / Logout */}
+      {/* Rodapé / Logout (Este mt-auto agora o empurra para o final do h-full, que é o final da tela) */}
       <div className="p-3 mt-auto border-t border-gray-200 dark:border-dark-700">
         <button
           onClick={handleLogout}
