@@ -88,7 +88,7 @@ const Login = ({ onLogin }) => {
                   onChange={handleChange}
                   // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
                   className={`input w-full ${formData.email.length === 0 ? 'pl-10' : ''}`}
-                  placeholder="seu@email.com"
+                  placeholder=""
                   required
                 />
               </div>
@@ -111,7 +111,7 @@ const Login = ({ onLogin }) => {
                   onChange={handleChange}
                   // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
                   className={`input w-full ${formData.password.length === 0 ? 'pl-10' : ''}`}
-                  placeholder="••••••••"
+                  placeholder=""
                   required
                 />
               </div>
