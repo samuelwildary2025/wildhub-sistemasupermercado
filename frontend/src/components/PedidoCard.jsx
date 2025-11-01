@@ -1,13 +1,15 @@
 import { Calendar, DollarSign, User, Package, Printer } from 'lucide-react'
 
 const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
+  // CORRIGIDO: Adicionado timeZone: 'America/Fortaleza'
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+    return new Date(dateString).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'America/Fortaleza' // Força o fuso horário local
     })
   }
 
