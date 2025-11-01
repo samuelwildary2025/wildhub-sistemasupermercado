@@ -58,9 +58,18 @@ def create_pedido(
             create_kwargs["observacao"] = pedido.observacao
         if getattr(pedido, "telefone", None) is not None: # <-- NOVO: Adicionando telefone
             create_kwargs["telefone"] = pedido.telefone     # <-- NOVO
-        if getattr(pedido, "created_at", None) is not None:
-            # Mapeia created_at -> data_pedido
-            create_kwargs["data_pedido"] = pedido.created_at
+
+        from zoneinfo import ZoneInfo
+
+if getattr(pedido, "created_at", None) is not None:
+    # Converte para horário de Brasília (GMT-3)
+    data_utc = pedido.created_at
+    if data_utc.tzinfo is None:
+        # Se for naive datetime (sem fuso), assumir que é UTC
+        data_utc = data_utc.replace(tzinfo=ZoneInfo("UTC"))
+    data_local = data_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
+    create_kwargs["data_pedido"] = data_local
+
 
         db_pedido = Pedido(**create_kwargs)
         db.add(db_pedido)
