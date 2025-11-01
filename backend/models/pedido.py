@@ -13,10 +13,12 @@ class Pedido(Base):
     valor_total = Column(Float, nullable=False, default=0.0)
     status = Column(String, default="pendente")  # pendente, faturado
     data_pedido = Column(DateTime, default=datetime.utcnow)
-    # Novos campos opcionais
+    
+    # Campos opcionais
     forma = Column(String, nullable=True)
     endereco = Column(String, nullable=True)
     observacao = Column(String, nullable=True)
+    telefone = Column(String, nullable=True) # <-- NOVO: ADICIONADO AQUI
     
     # Relacionamentos
     supermarket = relationship("Supermarket", back_populates="pedidos")
