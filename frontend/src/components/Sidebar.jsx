@@ -26,7 +26,7 @@ export default function Sidebar({ user, onLogout }) {
 
   return (
     <aside
-      // CORRIGIDO: Trocado min-h-screen por h-full
+      // CORRIGIDO: h-full (para layout fixo)
       className={`bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-dark-700 
                   ${isCollapsed ? 'w-20' : 'w-64'} h-full flex flex-col transition-all duration-300`}
     >
@@ -39,7 +39,7 @@ export default function Sidebar({ user, onLogout }) {
           {!isCollapsed && <span className="font-semibold text-gray-800 dark:text-white">Wildhub</span>}
         </div>
         
-        {/* CORRIGIDO: Substituir setas de texto por ícones Lucide */}
+        {/* Ícone de Chevron */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1 rounded-full text-gray-500 dark:text-gray-300 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
@@ -50,7 +50,8 @@ export default function Sidebar({ user, onLogout }) {
       </div>
 
       {/* Usuário */}
-      <div className="p-4 border-b border-gray-200 dark:border-dark-700">
+      {/* CORRIGIDO: Padding vertical aumentado (py-5) para "baixar" a linha e alinhar com o Header */}
+      <div className="px-4 py-5 border-b border-gray-200 dark:border-dark-700">
         <div className="truncate text-sm font-medium text-gray-600 dark:text-gray-300">
           {user?.email || 'admin@admin.com'}
         </div>
@@ -76,7 +77,7 @@ export default function Sidebar({ user, onLogout }) {
         ))}
       </nav>
 
-      {/* Rodapé / Logout (Este mt-auto agora o empurra para o final do h-full, que é o final da tela) */}
+      {/* Rodapé / Logout */}
       <div className="p-3 mt-auto border-t border-gray-200 dark:border-dark-700">
         <button
           onClick={handleLogout}
