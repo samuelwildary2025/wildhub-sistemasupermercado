@@ -192,11 +192,12 @@ const PainelPedidos = () => {
         }).join('\n');
         
     // 3. Estrutura completa do comprovante
+    // CORRIGIDO: Adicionado timeZone: 'America/Fortaleza'
     const comprovante = `
 SUPERMERCADO
 -----------------------------
 PEDIDO #${pedido.id}
-DATA: ${pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+DATA: ${pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }) : '-'}
 -----------------------------
 CLIENTE: ${clienteNome}
 TELEFONE: ${clienteTelefone}
@@ -328,7 +329,8 @@ Obrigado pela preferência!
                   >
                     <div onClick={() => openDetails(pedido)} className="flex-1 cursor-pointer">
                       <p className="text-gray-900 dark:text-white font-medium">{clienteNome}</p>
-                      <p className="text-gray-500 dark:text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR') : '-'}</p>
+                      {/* CORRIGIDO: Adicionado timeZone: 'America/Fortaleza' */}
+                      <p className="text-gray-500 dark:text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }) : '-'}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-yellow-600 dark:text-yellow-400 font-semibold">{formatCurrency(orderTotal(pedido))}</span>
