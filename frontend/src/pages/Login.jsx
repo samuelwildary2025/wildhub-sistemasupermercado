@@ -47,7 +47,7 @@ const Login = ({ onLogin }) => {
   }
 
   return (
-    // CORRIGIDO: Fundo da página agora é responsivo
+    // Fundo da página responsivo
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900 px-4">
       <div className="max-w-md w-full">
         {/* Logo */}
@@ -55,13 +55,13 @@ const Login = ({ onLogin }) => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
             <ShoppingCart size={32} className="text-white" />
           </div>
-          {/* CORRIGIDO: Cor do título e subtítulo */}
+          {/* Cor do título e subtítulo */}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Wildhub</h1>
           <p className="text-gray-600 dark:text-dark-400 mt-2">Sistema de Gestão de Pedidos</p>
         </div>
 
         {/* Form */}
-        {/* CORRIGIDO: Adicionado padding p-6 para espaçamento interno */}
+        {/* Adicionado padding p-6 para espaçamento interno */}
         <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
@@ -72,19 +72,22 @@ const Login = ({ onLogin }) => {
             )}
 
             <div>
-              {/* CORRIGIDO: Cor do Label */}
+              {/* Cor do Label */}
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-300 mb-2">
                 Email
               </label>
               <div className="relative">
-                {/* CORRIGIDO: Cor do Ícone (Mais claro) */}
-                <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                {/* CORRIGIDO: Ícone só aparece se o campo estiver vazio */}
+                {formData.email.length === 0 && (
+                  <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                )}
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="input pl-10 w-full"
+                  // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
+                  className={`input w-full ${formData.email.length === 0 ? 'pl-10' : ''}`}
                   placeholder="seu@email.com"
                   required
                 />
@@ -92,19 +95,22 @@ const Login = ({ onLogin }) => {
             </div>
 
             <div>
-              {/* CORRIGIDO: Cor do Label */}
+              {/* Cor do Label */}
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-300 mb-2">
                 Senha
               </label>
               <div className="relative">
-                {/* CORRIGIDO: Cor do Ícone (Mais claro) */}
-                <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                {/* CORRIGIDO: Ícone só aparece se o campo estiver vazio */}
+                {formData.password.length === 0 && (
+                  <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                )}
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="input pl-10 w-full"
+                  // CORRIGIDO: Padding só é aplicado se o campo estiver vazio
+                  className={`input w-full ${formData.password.length === 0 ? 'pl-10' : ''}`}
                   placeholder="••••••••"
                   required
                 />
@@ -118,10 +124,10 @@ const Login = ({ onLogin }) => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  // CORRIGIDO: Checkbox visível no modo claro
+                  // Checkbox visível no modo claro
                   className="h-4 w-4 text-blue-600 bg-white border-gray-400 rounded focus:ring-blue-500 dark:bg-dark-800 dark:border-dark-600"
                 />
-                {/* CORRIGIDO: Cor do texto da opção */}
+                {/* Cor do texto da opção */}
                 <span className="ml-2 text-sm text-gray-700 dark:text-dark-300">Manter conectado</span>
               </label>
             </div>
@@ -137,7 +143,7 @@ const Login = ({ onLogin }) => {
           </form>
 
           {/* Demo Credentials */}
-          {/* CORRIGIDO: Fundo e texto responsivos */}
+          {/* Fundo e texto responsivos */}
           <div className="mt-6 p-4 bg-gray-100 dark:bg-dark-700 rounded-lg">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Credenciais de Teste:</h3>
             <div className="text-xs text-gray-600 dark:text-dark-300 space-y-1">
