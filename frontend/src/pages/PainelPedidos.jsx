@@ -116,7 +116,8 @@ const PainelPedidos = () => {
       status: newStatus ?? current?.status,
       created_at: current?.data_pedido ?? current?.created_at,
       items: itensNorm,
-      phone: current?.telefone ?? current?.phone ?? null,
+      // Garante que o campo 'telefone' seja enviado (mesmo que nulo)
+      telefone: current?.telefone ?? current?.phone ?? null, 
       address: current?.endereco ?? current?.address ?? null,
       payment_method: current?.metodo_pagamento ?? current?.payment_method ?? null,
       observacoes: current?.observacoes ?? current?.observations ?? null,
@@ -370,6 +371,7 @@ Obrigado pela preferência!`
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
                         <Phone size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
+                        {/* CORRIGIDO: Agora prioriza selectedPedido?.telefone (vindo do backend) */}
                         <span>{selectedPedido?.telefone || selectedPedido?.phone || '—'}</span>
                       </div>
                       <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
