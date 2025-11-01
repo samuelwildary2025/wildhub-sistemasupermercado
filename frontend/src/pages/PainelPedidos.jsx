@@ -1,4 +1,3 @@
-// Código completo para frontend/src/pages/PainelPedidos.jsx
 import { useState, useEffect } from 'react'
 import { getPedidos, updatePedido } from '../services/api'
 import Header from '../components/Header'
@@ -172,7 +171,7 @@ const PainelPedidos = () => {
     setChatInput('')
   }
 
-  // FUNÇÃO CORRIGIDA PARA IMPRESSÃO (ROBUSTEZ DA DATA)
+  // FUNÇÃO CORRIGIDA PARA IMPRESSÃO (ROBUSTEZ DA DATA E DETALHES COMPLETOS)
   const handlePrint = (pedido) => {
     // 1. Extrair e garantir dados do cliente/pedido
     const clienteNome = pedido?.cliente_nome || pedido?.nome_cliente || pedido?.client_name || 'Cliente Desconhecido';
@@ -197,7 +196,7 @@ const PainelPedidos = () => {
 SUPERMERCADO
 -----------------------------
 PEDIDO #${pedido.id}
-DATA: ${pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+DATA: ${pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
 -----------------------------
 CLIENTE: ${clienteNome}
 TELEFONE: ${clienteTelefone}
@@ -215,7 +214,7 @@ Obrigado pela preferência!
 
     // Abre janela de impressão
     const printWindow = window.open('', '', 'width=400,height=600');
-    if (printWindow) { // Garante que a janela foi aberta (pode ser bloqueada pelo navegador)
+    if (printWindow) { 
       printWindow.document.write(`<pre style='font-size:16px;'>${comprovante}</pre>`);
       printWindow.document.close();
       printWindow.focus();
@@ -233,8 +232,6 @@ Obrigado pela preferência!
       </div>
     )
   }
-
-// ... (Resto do código JSX, inalterado)
 
   // Listas separadas
   const pendentesPedidos = pedidos.filter(p => p.status === 'pendente')
@@ -359,161 +356,156 @@ Obrigado pela preferência!
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
-    295.           <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
-    296.          </div>
-    297.          {concluidosPedidos.length === 0 ? (
-    298.           <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído.</p>
-    299.          ) : (
-    300.            <div className="space-y-3">
-    301.             {concluidosPedidos.map((pedido) => (
-    302.               <PedidoCard 
-    303.                 key={pedido.id}
-    304.                 pedido={pedido}
-    305.                 onStatusChange={handleStatusChange} 
-    306.                 onOpen={() => openDetails(pedido)}
-    307.               />
-    308.             ))}
-    309.            </div>
-    310.          )}
-    311.          </div>
-    312.         </div>
+              <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
+            </div>
+            {concluidosPedidos.length === 0 ? (
+              <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído.</p>
+            ) : (
+              <div className="space-y-3">
+                {concluidosPedidos.map((pedido) => (
+                  <PedidoCard 
+                    key={pedido.id}
+                    pedido={pedido}
+                    onStatusChange={handleStatusChange} 
+                    onOpen={() => openDetails(pedido)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
-    314.         {/* Detalhes do Pedido (Modal) */}
-    315.         {showDetails && selectedPedido && (
-    316.           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
-    317.             <div className="bg-white dark:bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 overflow-hidden">
-    318.               {/* Cabeçalho do modal */}
-    319.               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-700">
-    320.                 <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
-    321.                   {`Pedido de ${selectedPedido?.cliente_nome || selectedPedido?.nome_cliente || selectedPedido?.client_name || 'Cliente'}`}
-    322.                 </h3>
-    323.                 <button className="text-gray-500 dark:text-dark-400 hover:text-gray-900 dark:hover:text-white" onClick={closeDetails}>
-    324.                   <X size={20} />
-    325.                 </button>
-    326.               </div>
+        {/* Detalhes do Pedido (Modal) */}
+        {showDetails && selectedPedido && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
+            <div className="bg-white dark:bg-dark-800 w-full max-w-4xl rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 overflow-hidden">
+              {/* Cabeçalho do modal */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-700">
+                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
+                  {`Pedido de ${selectedPedido?.cliente_nome || selectedPedido?.nome_cliente || selectedPedido?.client_name || 'Cliente'}`}
+                </h3>
+                <button className="text-gray-500 dark:text-dark-400 hover:text-gray-900 dark:hover:text-white" onClick={closeDetails}>
+                  <X size={20} />
+                </button>
+              </div>
 
-    327.               <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-    328.                 {/* Coluna Esquerda */}
-    329.                 <div className="space-y-4 lg:col-span-2">
-    330.                   {/* Informações do Cliente */}
-    331.                   <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700"> 
-    332.                     <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
-    333.                       <Calendar size={18} className="text-gray-500 dark:text-dark-400" />
-    334.                       Informações do Cliente
-    335.                     </h4>
-    336.                     <div className="space-y-2 text-sm">
-    337.                       <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
-    338.                         <Phone size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
-    339.                         {/* CORRIGIDO: Agora prioriza selectedPedido?.telefone (vindo do backend) */}
-    340.                         <span>{selectedPedido?.telefone || selectedPedido?.phone || '—'}</span>
-    341.                       </div>
-    342.                       <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
-    343.                         <MapPin size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
-    344.                         <span>{selectedPedido?.endereco || selectedPedido?.address || '—'}</span>
-    345.                       </div>
-    346.                       <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
-    347.                         <CreditCard size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
-    348.                         <span>{selectedPedido?.forma || selectedPedido?.payment_method || '—'}</span>
-    349.                       </div>
-    350.                     </div>
-    351.                   </div>
+              <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Coluna Esquerda */}
+                <div className="space-y-4 lg:col-span-2">
+                  {/* Informações do Cliente */}
+                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700"> 
+                    <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+                      <Calendar size={18} className="text-gray-500 dark:text-dark-400" />
+                      Informações do Cliente
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+                        <Phone size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
+                        {/* CORRIGIDO: Agora prioriza selectedPedido?.telefone (vindo do backend) */}
+                        <span>{selectedPedido?.telefone || selectedPedido?.phone || '—'}</span>
+    467.                 </div>
+    468.                 <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+    469.                   <MapPin size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
+    470.                   <span>{selectedPedido?.endereco || selectedPedido?.address || '—'}</span>
+    471.                 </div>
+    472.                 <div className="flex items-start gap-2 text-gray-700 dark:text-dark-200">
+    473.                   <CreditCard size={16} className="mt-0.5 text-gray-500 dark:text-dark-400" />
+    474.                   <span>{selectedPedido?.forma || selectedPedido?.payment_method || '—'}</span>
+    475.                 </div>
+    476.                 </div>
+    477.                 </div>
 
-    353.                   {/* Itens do Pedido */}
-    354.                   <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700">
-    355.                     <h4 className="text-gray-900 dark:text-white font-medium mb-3">Itens do Pedido</h4>
-    356.                     <div className="space-y-2">
-    357.                       {(Array.isArray(selectedPedido?.itens) ? selectedPedido?.itens : selectedPedido?.items || []).map((item, idx) => {
-    358.                         const nome = item?.nome_produto || item?.product_name || 'Item'
-    359.                         const qtd = Number(item?.quantidade ?? item?.quantity) || 0
-    360.                         const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
-    361.                         const subtotal = qtd * unit
-    362.                         return (
-    363.                           <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
-    364.                             <div>
-    365.                               <p className="text-gray-900 dark:text-white">{nome}</p>
-    366.                               <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
-    367.                             </div>
-    368.                             <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
-    369.                           </div>
-    370.                         )
-    371.                       })}
-    372.                     </div>
-    373.                     <div className="flex items-center justify-between mt-3">
-    374.                       <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
-    375.                       <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
-    376.                     </div>
-    377.                   </div>
+    479.                 {/* Itens do Pedido */}
+    480.                 <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700">
+    481.                   <h4 className="text-gray-900 dark:text-white font-medium mb-3">Itens do Pedido</h4>
+    482.                   <div className="space-y-2">
+    483.                     {(Array.isArray(selectedPedido?.itens) ? selectedPedido?.itens : selectedPedido?.items || []).map((item, idx) => {
+    484.                       const nome = item?.nome_produto || item?.product_name || 'Item'
+    485.                       const qtd = Number(item?.quantidade ?? item?.quantity) || 0
+    486.                       const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
+    487.                       const subtotal = qtd * unit
+    488.                       return (
+    489.                         <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
+    490.                           <div>
+    491.                             <p className="text-gray-900 dark:text-white">{nome}</p>
+    492.                             <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
+    493.                           </div>
+    494.                           <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
+    495.                         </div>
+    496.                       )
+    497.                     })}
+    498.                   </div>
+    499.                   <div className="flex items-center justify-between mt-3">
+    500.                     <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
+  501.                     <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
+  502.                   </div>
+  503.                  </div>
 
-    379.                   {/* Observações */}
-    380.                   {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
-    381.                     <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
-    382.                       <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
-    383.                       <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
-    384.                     </div>
-    385.                   )}
+  505.                  {/* Observações */}
+  506.                  {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
+  507.                     <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
+  508.                       <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
+  509.                       <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
+  510.                     </div>
+  511.                   )}
 
-    387.                   {/* Ação */}
-    388.                   {selectedPedido?.status !== 'faturado' && (
-    389.                     <button
-    390.                       onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
-    391.                       className="w-full button flex items-center justify-center gap-2 py-3"
-    392.                     >
-    393.                       <CheckCircle size={18} />
-    394.                       Enviar para Faturamento
-    395.                     </button>
-    396.                   )}
-    397.                  </div>
+  513.                  {/* Ação */}
+  514.                  {selectedPedido?.status !== 'faturado' && (
+  515.                     <button
+  516.                       onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
+  517.                       className="w-full button flex items-center justify-center gap-2 py-3"
+  518.                     >
+  519.                       <CheckCircle size={18} />
+  520.                       Enviar para Faturamento
+  521.                     </button>
+  522.                   )}
+  523.                  </div>
 
-    399.                  {/* Coluna Direita - Chat */}
-    400.                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
-    401.                     <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
-    402.                       <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
-    403.                       Chat com Cliente
-    404.                     </h4>
-    405.                     <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
-    406.                       {chatMessages.length === 0 ? (
-    407.                         <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
-    408.                           <Check size={16} className="text-green-600 dark:text-green-400" />
-    409.                           Nenhuma mensagem ainda
-    410.                         </div>
-    411.                       ) : (
-    412.                         <div className="space-y-2">
-    413.                           {chatMessages.map((m) => (
-    414.                             <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
-    415.                           ))}
-    416.                         </div>
-    417.                       )}
-    418.                     </div>
+  525.                  {/* Coluna Direita - Chat */}
+  526.                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
+  527.                     <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+  528.                       <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
+  529.                       Chat com Cliente
+  530.                     </h4>
+  531.                     <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
+  532.                       {chatMessages.length === 0 ? (
+  533.                         <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
+  534.                           <Check size={16} className="text-green-600 dark:text-green-400" />
+  535.                           Nenhuma mensagem ainda
+  536.                         </div>
+  537.                       ) : (
+  538.                         <div className="space-y-2">
+  539.                           {chatMessages.map((m) => (
+  540.                             <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
+  541.                           ))}
+  542.                         </div>
+  543.                       )}
+  544.                     </div>
 
-    420.                     <div className="mt-3 flex items-center gap-2">
-    421.                       <input
-    422.                         value={chatInput}
-    423.                         onChange={(e) => setChatInput(e.target.value)}
-    424.                         onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
-    425.                         className="input flex-1"
-    426.                         placeholder="Digite sua mensagem..."
-    427.                       />
-    428.                       <button
-    429.                         onClick={handleSendChat}
-    430.                         className="button px-4 py-2"
-    431.                         title="Enviar mensagem"
-    432.                       >
-    433.                         ➤
-    434.                       </button>
-    435.                     </div>
-    436.                    </div>
-    437.                   </div>
-    438.                   </div>
-    439.                 )}
+  546.                     <div className="mt-3 flex items-center gap-2">
+  547.                       <input
+  548.                         value={chatInput}
+  549.                         onChange={(e) => setChatInput(e.target.value)}
+  550.                         onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
+  551.                         className="input flex-1"
+  552.                         placeholder="Digite sua mensagem..."
+  553.                       />
+  554.                       <button
+  555.                         onClick={handleSendChat}
+  556.                         className="button px-4 py-2"
+  557.                         title="Enviar mensagem"
+  558.                       >
+  559.                         ➤
+  560.                       </button>
+  561.                     </div>
+  562.                    </div>
+  563.                   </div>
+  564.                   </div>
+  565.                 )}
 
-    441.               </div>
-    442.             </div>
-    443.           </div>
-    444.         )}
+  567.               </div>
+  568.             </div>
+  569.           )
+  570. }
 
-    446.       </div>
-    447.     </div>
-    448.   )
-    449. }
-
-    451. export default PainelPedidos
+  572. export default PainelPedidos
