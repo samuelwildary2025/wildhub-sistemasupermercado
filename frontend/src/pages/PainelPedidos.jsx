@@ -246,16 +246,16 @@ Obrigado pela preferência!
         <div className={`p-2 rounded-full ${color}/20 flex items-center justify-center`}>
           <Icon className={color} size={24} />
         </div>
-       </div>
+      </div>
     </div>
   )
 
 
   return (
     // Removendo bg-dark-900 para permitir que AdminLayout controle o fundo
-    <div className="min-h-screen"> 
-      <Header 
-        title="Painel de Pedidos" 
+    <div className="min-h-screen"> 
+      <Header 
+        title="Painel de Pedidos" 
         subtitle="Gerencie todos os pedidos do seu supermercado"
       />
 
@@ -263,31 +263,31 @@ Obrigado pela preferência!
         {/* Stats Cards - Usando o novo KpiCard para melhorar a estética */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           
-          <KpiCard 
-            title="Total de Pedidos" 
-            value={stats.total} 
-            icon={TrendingUp} 
+          <KpiCard 
+            title="Total de Pedidos" 
+            value={stats.total} 
+            icon={TrendingUp} 
             color="text-blue-600 dark:text-blue-400"
           />
 
-          <KpiCard 
-            title="Pendentes" 
-            value={stats.pendentes} 
-            icon={Clock} 
+          <KpiCard 
+            title="Pendentes" 
+            value={stats.pendentes} 
+            icon={Clock} 
             color="text-yellow-600 dark:text-yellow-400"
           />
 
-          <KpiCard 
-            title="Faturados" 
-            value={stats.faturados} 
-            icon={CheckCircle} 
+          <KpiCard 
+            title="Faturados" 
+            value={stats.faturados} 
+            icon={CheckCircle} 
             color="text-green-600 dark:text-green-400"
           />
 
-          <KpiCard 
-            title="Valor Faturado" 
-            value={formatCurrency(stats.valorTotal)} 
-            icon={DollarSign} 
+          <KpiCard 
+            title="Valor Faturado" 
+            value={formatCurrency(stats.valorTotal)} 
+            icon={DollarSign} 
             color="text-green-600 dark:text-green-400"
           />
 
@@ -359,10 +359,10 @@ Obrigado pela preferência!
             ) : (
               <div className="space-y-3">
                 {concluidosPedidos.map((pedido) => (
-                  <PedidoCard 
+                  <PedidoCard 
                     key={pedido.id}
                     pedido={pedido}
-                    onStatusChange={handleStatusChange} 
+                    onStatusChange={handleStatusChange} 
                     onOpen={() => openDetails(pedido)}
                   />
                 ))}
@@ -389,7 +389,7 @@ Obrigado pela preferência!
                 {/* Coluna Esquerda */}
                 <div className="space-y-4 lg:col-span-2">
                   {/* Informações do Cliente */}
-                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700"> 
+                  <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700"> 
                     <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
                       <Calendar size={18} className="text-gray-500 dark:text-dark-400" />
                       Informações do Cliente
@@ -417,91 +417,92 @@ Obrigado pela preferência!
                     <div className="space-y-2">
                       {(Array.isArray(selectedPedido?.itens) ? selectedPedido?.itens : selectedPedido?.items || []).map((item, idx) => {
                         const nome = item?.nome_produto || item?.product_name || 'Item'
-    147.                 const qtd = Number(item?.quantidade ?? item?.quantity) || 0
-    148.                 const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
-    149.                 const subtotal = qtd * unit
-    150.                 return (
-    151.                   <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
-    152.                     <div>
-    153.                       <p className="text-gray-900 dark:text-white">{nome}</p>
-    154.                       <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
-    155.                     </div>
-    156.                     <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
-    157.                   </div>
-    158.                 )
-    159.               })}
-    160.             </div>
-    161.             <div className="flex items-center justify-between mt-3">
-    162.               <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
-    163.               <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
-    164.             </div>
-    165.            </div>
+                        const qtd = Number(item?.quantidade ?? item?.quantity) || 0
+                        const unit = Number(item?.preco_unitario ?? item?.unit_price) || 0
+                        const subtotal = qtd * unit
+                        return (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-700">
+                            <div>
+                              <p className="text-gray-900 dark:text-white">{nome}</p>
+                              <p className="text-gray-500 dark:text-dark-400 text-xs">{`${qtd}x ${formatCurrency(unit)}`}</p>
+                            </div>
+                            <div className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-gray-700 dark:text-white/80 font-medium">Total</span>
+                      <span className="text-green-600 dark:text-green-400 font-extrabold text-lg">{formatCurrency(orderTotal(selectedPedido))}</span>
+                    </div>
+                  </div>
 
-    167.            {/* Observações */}
-    168.            {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
-    169.               <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
-    170.                 <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
-    171.                 <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
-    172.               </div>
-    173.             )}
+                  {/* Observações */}
+                  {(selectedPedido?.observacao || selectedPedido?.observacoes) && (
+                    <div className="rounded-lg p-4 border bg-amber-100 dark:bg-amber-800/30 border-amber-400 dark:border-amber-700/40">
+                      <h4 className="text-amber-800 dark:text-white font-medium mb-2">Observações</h4>
+                      <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
+                    </div>
+                  )}
 
-    175.            {/* Ação */}
-    176.            {selectedPedido?.status !== 'faturado' && (
-    177.               <button
-    178.                 onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
-    179.                 className="w-full button flex items-center justify-center gap-2 py-3"
-    180.               >
-    181.                 <CheckCircle size={18} />
-    182.                 Enviar para Faturamento
-    183.               </button>
-    184.             )}
-    185.            </div>
+                  {/* Ação */}
+                  {selectedPedido?.status !== 'faturado' && (
+                    <button
+                      onClick={() => handleStatusChange(selectedPedido.id, 'faturado')}
+                      className="w-full button flex items-center justify-center gap-2 py-3"
+                    >
+                      <CheckCircle size={18} />
+                      Enviar para Faturamento
+                    </button>
+                  )}
+                </div>
 
-    187.            {/* Coluna Direita - Chat */}
-    188.            <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
-    189.               <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
-    190.                 <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
-    191.                 Chat com Cliente
-    192.               </h4>
-    193.               <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
-    194.                 {chatMessages.length === 0 ? (
-    195.                   <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
-    196.                     <Check size={16} className="text-green-600 dark:text-green-400" />
-    197.                     Nenhuma mensagem ainda
-    198.                   </div>
-    199.                 ) : (
-    200.                   <div className="space-y-2">
-    201.                     {chatMessages.map((m) => (
-    202.                       <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
-    203.                     ))}
-    204.                   </div>
-    205.                 )}
-    206.               </div>
+                {/* Coluna Direita - Chat */}
+                <div className="bg-gray-50 dark:bg-dark-900 rounded-lg p-4 border border-gray-200 dark:border-dark-700 flex flex-col">
+                  <h4 className="text-gray-900 dark:text-white font-medium mb-3 flex items-center gap-2">
+                    <MessageSquare size={18} className="text-gray-500 dark:text-dark-400" />
+                    Chat com Cliente
+                  </h4>
+                  <div className="flex-1 rounded bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 p-3 overflow-y-auto">
+                    {chatMessages.length === 0 ? (
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-dark-300 text-sm">
+                        <Check size={16} className="text-green-600 dark:text-green-400" />
+                        Nenhuma mensagem ainda
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {chatMessages.map((m) => (
+                          <div key={m.id} className="bg-gray-100 dark:bg-dark-700 text-gray-800 dark:text-dark-100 text-sm p-2 rounded">{m.text}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-    208.             <div className="mt-3 flex items-center gap-2">
-    209.               <input
-    210.                 value={chatInput}
-    211.                 onChange={(e) => setChatInput(e.target.value)}
-    212.                 onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
-    213.                 className="input flex-1"
-    214.                 placeholder="Digite sua mensagem..."
-    215.               />
-    216.               <button
-    217.                 onClick={handleSendChat}
-    218.                 className="button px-4 py-2"
-    219.                 title="Enviar mensagem"
-    220.               >
-    221.                 ➤
-    222.               </button>
-    223.             </div>
-    224.            </div>
-    225.           </div>
-    226.           </div>
-    227.         )}
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat() }}
+                      className="input flex-1"
+                      placeholder="Digite sua mensagem..."
+                    />
+                    <button
+                      onClick={handleSendChat}
+                      className="button px-4 py-2"
+                      title="Enviar mensagem"
+                    >
+                      ➤
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-    229.       </div>
-    230.     </div>
-    231.   )
-    232. }
+      </div>
+    </div>
+  )
+}
 
-    234. export default PainelPedidos
+export default PainelPedidos
