@@ -471,8 +471,7 @@ Obrigado pela preferência!
                 </button>
                 {concluidosDateFilter && (
                   <span className="text-xs text-gray-500 dark:text-dark-400">
-                    Exibindo pedidos de {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date(`${concluidosDateFilter}T00:00:00`))}
-                  </span>
+                         </span>
                 )}
               </div>
             </div>
