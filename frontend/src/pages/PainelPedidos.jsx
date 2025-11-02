@@ -80,6 +80,21 @@ const PainelPedidos = () => {
     }
   }
 
+  const formatDateKey = (date) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date)
+
+  const getPedidoDate = (pedido) => {
+    const raw = pedido?.data_pedido || pedido?.created_at || pedido?.updated_at
+    if (!raw) return null
+    const parsed = new Date(raw)
+    return Number.isNaN(parsed.valueOf()) ? null : parsed
+  }
+
+  const getPedidoDateKey = (pedido) => {
+    const date = getPedidoDate(pedido)
+    return date ? formatDateKey(date) : null
+  }
+
   // Helper para calcular total do pedido de forma robusta
   const orderTotal = (pedido) => {
     const itens = Array.isArray(pedido?.itens) ? pedido.itens : (Array.isArray(pedido?.items) ? pedido.items : [])
@@ -93,12 +108,17 @@ const PainelPedidos = () => {
   }
 
   const calculateStats = () => {
-    const total = pedidos.length
-    const pendentes = pedidos.filter(p => p.status === 'pendente').length
-    const faturados = pedidos.filter(p => p.status === 'faturado').length
-    const valorTotal = pedidos.filter(p => p.status === 'faturado').reduce((sum, p) => sum + orderTotal(p), 0)
+    const pedidosHoje = pedidos.filter((p) => getPedidoDateKey(p) === todayKey)
+    const pendentesHoje = pedidosHoje.filter((p) => p.status === 'pendente')
+    const faturadosHoje = pedidosHoje.filter((p) => p.status === 'faturado')
+    const valorTotal = faturadosHoje.reduce((sum, p) => sum + orderTotal(p), 0)
 
-    setStats({ total, pendentes, faturados, valorTotal })
+    setStats({
+      total: pedidosHoje.length,
+      pendentes: pendentesHoje.length,
+      faturados: faturadosHoje.length,
+      valorTotal,
+    })
   }
 
   const handleStatusChange = async (pedidoId, newStatus) => {
@@ -160,20 +180,7 @@ const PainelPedidos = () => {
     setChatInput('')
   }
 
-  const parsePedidoDate = (pedido) => {
-    const raw = pedido?.data_pedido || pedido?.created_at || pedido?.updated_at
-    const date = raw ? new Date(raw) : null
-    return date && !Number.isNaN(date.valueOf()) ? date : new Date(0)
-  }
-
-  const toDateKey = (pedido) => {
-    try {
-      const date = parsePedidoDate(pedido)
-      return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date)
-    } catch (err) {
-      return null
-    }
-  }
+  const parsePedidoDate = (pedido) => getPedidoDate(pedido) || new Date(0)
 
 
   const pendentesPedidos = pedidos.filter((p) => p.status === 'pendente')
@@ -186,7 +193,7 @@ const PainelPedidos = () => {
 
   const filteredConcluidos = useMemo(() => {
     if (!concluidosDateFilter) return concluidosPedidos
-    return concluidosPedidos.filter((pedido) => toDateKey(pedido) === concluidosDateFilter)
+    return concluidosPedidos.filter((pedido) => getPedidoDateKey(pedido) === concluidosDateFilter)
   }, [concluidosPedidos, concluidosDateFilter])
 
   const totalConcluidosPages = useMemo(() => {
@@ -447,7 +454,7 @@ Obrigado pela preferência!
 
               <div className="flex flex-wrap items-center gap-3">
                 <label className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
-                 
+                  Filtrar por data
                 </label>
                 <input
                   type="date"
@@ -469,7 +476,8 @@ Obrigado pela preferência!
                 </button>
                 {concluidosDateFilter && (
                   <span className="text-xs text-gray-500 dark:text-dark-400">
-                       </span>
+                    Exibindo pedidos de {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date(`${concluidosDateFilter}T00:00:00`))}
+                  </span>
                 )}
               </div>
             </div>
