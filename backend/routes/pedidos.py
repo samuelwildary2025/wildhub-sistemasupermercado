@@ -2,16 +2,70 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 import traceback
 import os
+import re
 from typing import List, Optional
 from database import get_db
 from models.pedido import Pedido, ItemPedido
+from models.cliente import Cliente
 from models.user import User
 from schemas.pedido import PedidoCreate, PedidoResponse, PedidoUpdate
 from auth.middleware import get_current_user, get_current_tenant, validate_custom_token_or_jwt
 from utils.crud_logger import log_event
-from datetime import datetime
+from zoneinfo import ZoneInfo
 
 router = APIRouter(prefix="/api/pedidos", tags=["pedidos"])
+
+
+def _placeholder_email(tenant_id: int, telefone: str) -> str:
+    digits = "".join(re.findall(r"\d", telefone or "")) or "0000"
+    return f"cliente-{tenant_id}-{digits}@contatos.supermercado"
+
+
+def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreate) -> None:
+    """Garante que o cliente existe na base a partir dos dados do pedido."""
+    telefone = getattr(payload, "telefone", None)
+    nome = payload.nome_cliente
+
+    if not telefone and not nome:
+        return
+
+    query = db.query(Cliente).filter(Cliente.tenant_id == tenant_id)
+
+    cliente = None
+    if telefone:
+        cliente = query.filter(Cliente.telefone == telefone).first()
+    if not cliente:
+        cliente = query.filter(Cliente.nome == nome).first()
+
+    endereco = getattr(payload, "endereco", None)
+
+    if cliente:
+        updated = False
+        if telefone and cliente.telefone != telefone:
+            cliente.telefone = telefone
+            updated = True
+        if nome and cliente.nome != nome:
+            cliente.nome = nome
+            updated = True
+        if endereco and (cliente.endereco or "").strip() != endereco.strip():
+            cliente.endereco = endereco
+            updated = True
+        if updated:
+            cliente.ativo = True
+    else:
+        if not telefone:
+            # Não cria registros sem telefone para evitar duplicidades
+            return
+        cliente = Cliente(
+            nome=nome or "Cliente",
+            email=_placeholder_email(tenant_id, telefone),
+            telefone=telefone,
+            endereco=endereco,
+            tenant_id=tenant_id,
+            ativo=True,
+        )
+        db.add(cliente)
+
 
 @router.post("/", response_model=PedidoResponse)
 def create_pedido(
@@ -56,13 +110,25 @@ def create_pedido(
             create_kwargs["endereco"] = pedido.endereco
         if getattr(pedido, "observacao", None) is not None:
             create_kwargs["observacao"] = pedido.observacao
+        if getattr(pedido, "telefone", None) is not None:
+            create_kwargs["telefone"] = pedido.telefone
         if getattr(pedido, "created_at", None) is not None:
-            # Mapeia created_at -> data_pedido
-            create_kwargs["data_pedido"] = pedido.created_at
+            # Mapeia created_at -> data_pedido respeitando GMT-3
+            if pedido.created_at.tzinfo is None:
+                create_kwargs["data_pedido"] = pedido.created_at
+            else:
+                create_kwargs["data_pedido"] = pedido.created_at.astimezone(ZoneInfo("America/Sao_Paulo")).replace(tzinfo=None)
 
         db_pedido = Pedido(**create_kwargs)
         db.add(db_pedido)
         db.flush()  # garante ID do pedido
+
+        # Garante que o cliente fique registrado para consultas rápidas no painel
+        try:
+            _upsert_cliente_from_order(db, tenant_id, pedido)
+        except Exception:
+            # Evita quebrar a criação do pedido por falha nesse helper
+            pass
 
         # Criar itens do pedido associando via relacionamento
         for item in pedido.itens:
