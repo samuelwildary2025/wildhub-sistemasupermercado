@@ -21,13 +21,13 @@ def _placeholder_email(tenant_id: int, telefone: str) -> str:
     return f"cliente-{tenant_id}-{digits}@contatos.supermercado"
 
 
-def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreate) -> None:
-    """Garante que o cliente existe na base a partir dos dados do pedido."""
+def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreate) -> Optional[Cliente]:
+    """Garante que o cliente existe na base a partir dos dados do pedido e retorna-o."""
     telefone = getattr(payload, "telefone", None)
     nome = payload.nome_cliente
 
     if not telefone and not nome:
-        return
+        return None
 
     query = db.query(Cliente).filter(Cliente.tenant_id == tenant_id)
 
@@ -52,10 +52,11 @@ def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreat
             updated = True
         if updated:
             cliente.ativo = True
+        return cliente
     else:
         if not telefone:
             # Não cria registros sem telefone para evitar duplicidades
-            return
+            return None
         cliente = Cliente(
             nome=nome or "Cliente",
             email=_placeholder_email(tenant_id, telefone),
@@ -65,6 +66,8 @@ def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreat
             ativo=True,
         )
         db.add(cliente)
+        db.flush()
+        return cliente
 
 
 @router.post("/", response_model=PedidoResponse)
@@ -97,12 +100,20 @@ def create_pedido(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Valor total informado ({provided}) difere do calculado pelos itens ({valor_total})."
                 )
+        cliente_entity = None
+        try:
+            cliente_entity = _upsert_cliente_from_order(db, tenant_id, pedido)
+        except Exception:
+            cliente_entity = None
+
         # Criar pedido
         create_kwargs = {
             "tenant_id": tenant_id,
             "nome_cliente": pedido.nome_cliente,
             "valor_total": valor_total,
         }
+        if cliente_entity:
+            create_kwargs["cliente_id"] = cliente_entity.id
         # Campos opcionais quando presentes
         if getattr(pedido, "forma", None) is not None:
             create_kwargs["forma"] = pedido.forma
@@ -122,13 +133,6 @@ def create_pedido(
         db_pedido = Pedido(**create_kwargs)
         db.add(db_pedido)
         db.flush()  # garante ID do pedido
-
-        # Garante que o cliente fique registrado para consultas rápidas no painel
-        try:
-            _upsert_cliente_from_order(db, tenant_id, pedido)
-        except Exception:
-            # Evita quebrar a criação do pedido por falha nesse helper
-            pass
 
         # Criar itens do pedido associando via relacionamento
         for item in pedido.itens:
