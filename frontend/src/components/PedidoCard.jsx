@@ -40,6 +40,8 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
   }
 
   // CORRIGIDO: Cores dinâmicas para funcionar no modo claro
+  const numeroVisivel = pedido?.numero_pedido ?? pedido.id
+
   return (
     <div 
       className="bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors rounded-lg p-3 border border-gray-200 dark:border-dark-700 cursor-pointer"
@@ -48,7 +50,7 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Texto preto no modo claro / branco no dark */}
-          <span className="text-gray-900 dark:text-white font-medium">#{pedido.id}</span>
+          <span className="text-gray-900 dark:text-white font-medium">#{numeroVisivel}</span>
           <span className="text-gray-600 dark:text-dark-300 text-sm">{pedido.nome_cliente}</span>
         </div>
         {/* Status Tag */}
