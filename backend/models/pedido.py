@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -12,6 +12,9 @@ def _now_brt_naive() -> datetime:
 
 class Pedido(Base):
     __tablename__ = "pedidos"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "numero_pedido", name="uq_pedidos_tenant_numero"),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("supermarkets.id"), nullable=False)
@@ -21,7 +24,6 @@ class Pedido(Base):
     status = Column(String, default="pendente")  # pendente, faturado
     data_pedido = Column(DateTime, default=_now_brt_naive)
     numero_pedido = Column(Integer, nullable=False, default=0)
-    numero_pedido_diario = Column(Integer, nullable=False, default=0)
     
     # Campos opcionais
     forma = Column(String, nullable=True)
