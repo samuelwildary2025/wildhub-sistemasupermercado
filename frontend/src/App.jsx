@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Login from './pages/Login'
 import PainelPedidos from './pages/PainelPedidos'
 import Analytics from './pages/Analytics'
+import Clientes from './pages/Clientes'
 import AdminDashboard from './pages/AdminDashboard'
 import Supermarkets from './pages/Supermarkets'
 import AdminLayout from './components/AdminLayout'
@@ -126,6 +127,7 @@ function App() {
           >
             <Route index element={<Navigate to="/pedidos" replace />} />
             <Route path="pedidos" element={<PainelPedidos user={user} onLogout={handleLogout} />} />
+            <Route path="clientes" element={<Clientes user={user} onLogout={handleLogout} />} />
             <Route path="analytics" element={<Analytics user={user} onLogout={handleLogout} />} />
           </Route>
 
