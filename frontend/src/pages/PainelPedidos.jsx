@@ -96,12 +96,6 @@ const PainelPedidos = () => {
     return date ? formatDateKey(date) : null
   }
 
-  const formatDisplayDate = (key) => {
-    if (!key) return ''
-    const date = new Date(`${key}T00:00:00`)
-    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(date)
-  }
-
   const openDatePicker = () => {
     const input = datePickerRef.current
     if (!input) return
@@ -466,9 +460,6 @@ Obrigado pela preferência!
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
-                  Filtrar por data
-                </span>
                 <div className="relative">
                   <button
                     type="button"
@@ -500,11 +491,6 @@ Obrigado pela preferência!
                 >
                   Todos
                 </button>
-                {concluidosDateFilter && (
-                  <span className="text-xs text-gray-500 dark:text-dark-400">
-                    Exibindo pedidos de {formatDisplayDate(concluidosDateFilter)}
-                  </span>
-                )}
               </div>
             </div>
             {filteredConcluidos.length === 0 ? (
