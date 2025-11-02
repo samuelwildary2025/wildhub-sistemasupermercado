@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getPedidos, updatePedido } from '../services/api'
 import Header from '../components/Header'
 import PedidoCard from '../components/PedidoCard'
@@ -152,10 +152,20 @@ const PainelPedidos = () => {
     setChatInput('')
   }
 
-  const filteredPedidos = pedidos.filter(pedido => {
-    if (filter === 'todos') return true
-    return pedido.status === filter
-  })
+  const parsePedidoDate = (pedido) => {
+    const raw = pedido?.data_pedido || pedido?.created_at || pedido?.updated_at
+    const date = raw ? new Date(raw) : null
+    return date && !Number.isNaN(date.valueOf()) ? date : new Date(0)
+  }
+
+
+  const pendentesPedidos = pedidos.filter((p) => p.status === 'pendente')
+
+  const concluidosPedidos = useMemo(() => {
+    return pedidos
+      .filter((p) => p.status === 'faturado')
+      .sort((a, b) => parsePedidoDate(b) - parsePedidoDate(a))
+  }, [pedidos])
 
   const formatCurrency = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0
@@ -235,9 +245,6 @@ Obrigado pela preferência!
   }
 
   // Listas separadas
-  const pendentesPedidos = pedidos.filter(p => p.status === 'pendente')
-  const concluidosPedidos = pedidos.filter(p => p.status === 'faturado')
-  
   // Componente de Card KPI reutilizável (Ajustado para o Painel de Pedidos)
   const KpiCard = ({ title, value, icon: Icon, color }) => (
     <div className="card p-4 hover:shadow-lg transition-shadow">
