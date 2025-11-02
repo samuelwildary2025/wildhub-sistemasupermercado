@@ -73,6 +73,7 @@ class PedidoResponse(BaseModel):
     id: int
     tenant_id: int
     numero_pedido: int
+    numero_pedido_diario: int
     nome_cliente: str
     valor_total: float
     status: str
