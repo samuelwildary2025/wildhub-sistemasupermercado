@@ -20,6 +20,8 @@ const PainelPedidos = () => {
   const [chatMessages, setChatMessages] = useState([])
   const [concluidosPage, setConcluidosPage] = useState(0)
   const CONCLUIDOS_PAGE_SIZE = 15
+  const todayKey = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()), [])
+  const [concluidosDateFilter, setConcluidosDateFilter] = useState(todayKey)
 
   // obtém supermarketId do usuário logado (se houver)
   const getSupermarketId = () => {
@@ -164,6 +166,15 @@ const PainelPedidos = () => {
     return date && !Number.isNaN(date.valueOf()) ? date : new Date(0)
   }
 
+  const toDateKey = (pedido) => {
+    try {
+      const date = parsePedidoDate(pedido)
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date)
+    } catch (err) {
+      return null
+    }
+  }
+
 
   const pendentesPedidos = pedidos.filter((p) => p.status === 'pendente')
 
@@ -173,21 +184,30 @@ const PainelPedidos = () => {
       .sort((a, b) => parsePedidoDate(b) - parsePedidoDate(a))
   }, [pedidos])
 
+  const filteredConcluidos = useMemo(() => {
+    if (!concluidosDateFilter) return concluidosPedidos
+    return concluidosPedidos.filter((pedido) => toDateKey(pedido) === concluidosDateFilter)
+  }, [concluidosPedidos, concluidosDateFilter])
+
   const totalConcluidosPages = useMemo(() => {
-    return Math.max(1, Math.ceil(concluidosPedidos.length / CONCLUIDOS_PAGE_SIZE))
-  }, [concluidosPedidos.length])
+    return Math.max(1, Math.ceil(filteredConcluidos.length / CONCLUIDOS_PAGE_SIZE))
+  }, [filteredConcluidos.length])
 
   useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(concluidosPedidos.length / CONCLUIDOS_PAGE_SIZE) - 1)
+    const maxPage = Math.max(0, Math.ceil(filteredConcluidos.length / CONCLUIDOS_PAGE_SIZE) - 1)
     if (concluidosPage > maxPage) {
       setConcluidosPage(maxPage)
     }
-  }, [concluidosPedidos.length, concluidosPage])
+  }, [filteredConcluidos.length, concluidosPage])
+
+  useEffect(() => {
+    setConcluidosPage(0)
+  }, [concluidosDateFilter])
 
   const paginatedConcluidos = useMemo(() => {
     const start = concluidosPage * CONCLUIDOS_PAGE_SIZE
-    return concluidosPedidos.slice(start, start + CONCLUIDOS_PAGE_SIZE)
-  }, [concluidosPedidos, concluidosPage])
+    return filteredConcluidos.slice(start, start + CONCLUIDOS_PAGE_SIZE)
+  }, [filteredConcluidos, concluidosPage])
 
   const formatCurrency = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0
@@ -386,45 +406,76 @@ Obrigado pela preferência!
 
           {/* Concluídos */}
           <div className="card p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
-                <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
-              </div>
-              {concluidosPedidos.length > CONCLUIDOS_PAGE_SIZE && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setConcluidosPage((page) => Math.max(0, page - 1))}
-                    disabled={concluidosPage === 0}
-                    className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
-                      concluidosPage === 0
-                        ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
-                        : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
-                    }`}
-                    aria-label="Página anterior"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="text-xs text-gray-500 dark:text-dark-300">
-                    {concluidosPage + 1} / {totalConcluidosPages}
-                  </span>
-                  <button
-                    onClick={() => setConcluidosPage((page) => Math.min(totalConcluidosPages - 1, page + 1))}
-                    disabled={concluidosPage >= totalConcluidosPages - 1}
-                    className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
-                      concluidosPage >= totalConcluidosPages - 1
-                        ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
-                        : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
-                    }`}
-                    aria-label="Próxima página"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+            <div className="flex flex-col gap-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
+                  <span className="text-sm text-green-600 dark:text-green-400">{filteredConcluidos.length}</span>
                 </div>
-              )}
+                {filteredConcluidos.length > CONCLUIDOS_PAGE_SIZE && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setConcluidosPage((page) => Math.max(0, page - 1))}
+                      disabled={concluidosPage === 0}
+                      className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
+                        concluidosPage === 0
+                          ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
+                          : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
+                      }`}
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-xs text-gray-500 dark:text-dark-300">
+                      {concluidosPage + 1} / {totalConcluidosPages}
+                    </span>
+                    <button
+                      onClick={() => setConcluidosPage((page) => Math.min(totalConcluidosPages - 1, page + 1))}
+                      disabled={concluidosPage >= totalConcluidosPages - 1}
+                      className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
+                        concluidosPage >= totalConcluidosPages - 1
+                          ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
+                          : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
+                      }`}
+                      aria-label="Próxima página"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
+                  Filtrar por data
+                </label>
+                <input
+                  type="date"
+                  value={concluidosDateFilter || ''}
+                  onChange={(e) => setConcluidosDateFilter(e.target.value)}
+                  className="input w-40 py-1 text-sm"
+                />
+                <button
+                  onClick={() => setConcluidosDateFilter(todayKey)}
+                  className="button-outline text-xs px-3 py-1"
+                >
+                  Hoje
+                </button>
+                <button
+                  onClick={() => setConcluidosDateFilter('')}
+                  className="button-outline text-xs px-3 py-1"
+                >
+                  Todos
+                </button>
+                {concluidosDateFilter && (
+                  <span className="text-xs text-gray-500 dark:text-dark-400">
+                    Exibindo pedidos de {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date(`${concluidosDateFilter}T00:00:00`))}
+                  </span>
+                )}
+              </div>
             </div>
-            {concluidosPedidos.length === 0 ? (
-              <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído.</p>
+            {filteredConcluidos.length === 0 ? (
+              <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído para a seleção atual.</p>
             ) : (
               <div className="space-y-3">
                 {paginatedConcluidos.map((pedido) => (
