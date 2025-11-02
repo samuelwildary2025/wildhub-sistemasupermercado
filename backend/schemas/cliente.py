@@ -38,6 +38,7 @@ class Cliente(ClienteBase):
     tenant_id: int
     created_at: datetime
     updated_at: datetime
+    total_pedidos: int = 0
 
     class Config:
         from_attributes = True
