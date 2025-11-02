@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func, inspect, text
 import traceback
 import os
 import re
@@ -14,6 +15,45 @@ from utils.crud_logger import log_event
 from zoneinfo import ZoneInfo
 
 router = APIRouter(prefix="/api/pedidos", tags=["pedidos"])
+
+_numero_pedido_migration_done = False
+
+
+def _ensure_numero_pedido_column(db: Session) -> None:
+    global _numero_pedido_migration_done
+    if _numero_pedido_migration_done:
+        return
+
+    engine = db.get_bind()
+    inspector = inspect(engine)
+    column_names = [col["name"] for col in inspector.get_columns("pedidos")]
+
+    if "numero_pedido" not in column_names:
+        with engine.connect() as connection:
+            connection.execute(text("ALTER TABLE pedidos ADD COLUMN numero_pedido INTEGER DEFAULT 0"))
+            connection.commit()
+
+    # Normaliza sequencias existentes
+    pedidos_sem_numero = (
+        db.query(Pedido)
+        .filter((Pedido.numero_pedido == None) | (Pedido.numero_pedido == 0))
+        .count()
+    )
+
+    if pedidos_sem_numero:
+        pedidos = (
+            db.query(Pedido)
+            .order_by(Pedido.tenant_id, Pedido.data_pedido, Pedido.id)
+            .all()
+        )
+        last_seq = {}
+        for pedido in pedidos:
+            seq = last_seq.get(pedido.tenant_id, 0) + 1
+            pedido.numero_pedido = seq
+            last_seq[pedido.tenant_id] = seq
+        db.commit()
+
+    _numero_pedido_migration_done = True
 
 
 def _placeholder_email(tenant_id: int, telefone: str) -> str:
@@ -76,6 +116,7 @@ def create_pedido(
     db: Session = Depends(get_db),
     token_info: dict = Depends(validate_custom_token_or_jwt)
 ):
+    _ensure_numero_pedido_column(db)
     # Obter tenant_id baseado no tipo de token
     if token_info["type"] == "jwt":
         current_user = token_info["user"]
@@ -106,11 +147,20 @@ def create_pedido(
         except Exception:
             cliente_entity = None
 
+        # Calcula próximo número sequencial para o tenant
+        max_numero = (
+            db.query(func.max(Pedido.numero_pedido))
+            .filter(Pedido.tenant_id == tenant_id)
+            .scalar()
+        )
+        next_numero = int(max_numero or 0) + 1
+
         # Criar pedido
         create_kwargs = {
             "tenant_id": tenant_id,
             "nome_cliente": pedido.nome_cliente,
             "valor_total": valor_total,
+            "numero_pedido": next_numero,
         }
         if cliente_entity:
             create_kwargs["cliente_id"] = cliente_entity.id
@@ -220,6 +270,7 @@ def list_pedidos(
     current_user: User = Depends(get_current_user),
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
+    _ensure_numero_pedido_column(db)
     query = db.query(Pedido)
     
     # Filtrar por tenant se não for admin
@@ -240,6 +291,7 @@ def get_pedido(
     current_user: User = Depends(get_current_user),
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
+    _ensure_numero_pedido_column(db)
     query = db.query(Pedido).filter(Pedido.id == pedido_id)
     
     # Filtrar por tenant se não for admin
@@ -263,6 +315,7 @@ def update_pedido(
     current_user: User = Depends(get_current_user),
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
+    _ensure_numero_pedido_column(db)
     query = db.query(Pedido).filter(Pedido.id == pedido_id)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
@@ -297,6 +350,7 @@ def delete_pedido(
     current_user: User = Depends(get_current_user),
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
+    _ensure_numero_pedido_column(db)
     query = db.query(Pedido).filter(Pedido.id == pedido_id)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
