@@ -45,21 +45,6 @@ const Clientes = () => {
     return email
   }
 
-  const formatDate = (value) => {
-    if (!value) return '—'
-    try {
-      return new Date(value).toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch (err) {
-      return '—'
-    }
-  }
-
   const renderContent = () => {
     if (loading) {
       return (
@@ -99,8 +84,7 @@ const Clientes = () => {
               <th className="py-3 px-4">Cliente</th>
               <th className="py-3 px-4">Telefone</th>
               <th className="py-3 px-4">Endereço</th>
-              <th className="py-3 px-4">Criado em</th>
-              <th className="py-3 px-4">Última atualização</th>
+              <th className="py-3 px-4">Pedidos realizados</th>
             </tr>
           </thead>
           <tbody>
@@ -133,8 +117,7 @@ const Clientes = () => {
                     </div>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-gray-600 dark:text-dark-300">{formatDate(cliente.created_at)}</td>
-                <td className="py-3 px-4 text-gray-600 dark:text-dark-300">{formatDate(cliente.updated_at)}</td>
+                <td className="py-3 px-4 text-gray-900 dark:text-white font-semibold">{cliente.total_pedidos ?? 0}</td>
               </tr>
             ))}
           </tbody>
