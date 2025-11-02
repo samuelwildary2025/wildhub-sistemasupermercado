@@ -40,7 +40,7 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
   }
 
   // CORRIGIDO: Cores dinâmicas para funcionar no modo claro
-  const numeroVisivel = pedido?.numero_pedido_diario ?? pedido?.numero_pedido ?? pedido.id
+  const numeroVisivel = pedido?.numero_pedido ?? pedido.id
 
   return (
     <div 
