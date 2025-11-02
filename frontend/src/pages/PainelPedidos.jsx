@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { getPedidos, updatePedido } from '../services/api'
 import Header from '../components/Header'
 import PedidoCard from '../components/PedidoCard'
-import { Plus, TrendingUp, Clock, CheckCircle, DollarSign, X, Phone, MapPin, CreditCard, MessageSquare, Calendar, Check, Printer } from 'lucide-react'
+import { Plus, TrendingUp, Clock, CheckCircle, DollarSign, X, Phone, MapPin, CreditCard, MessageSquare, Calendar, Check, Printer, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PainelPedidos = () => {
   const [pedidos, setPedidos] = useState([])
@@ -18,6 +18,8 @@ const PainelPedidos = () => {
   const [showDetails, setShowDetails] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState([])
+  const [concluidosPage, setConcluidosPage] = useState(0)
+  const CONCLUIDOS_PAGE_SIZE = 15
 
   // obtém supermarketId do usuário logado (se houver)
   const getSupermarketId = () => {
@@ -125,6 +127,10 @@ const PainelPedidos = () => {
       supermarket_id: current?.supermarket_id ?? getSupermarketId() ?? 1
     }
 
+    if (newStatus === 'faturado') {
+      setConcluidosPage(0)
+    }
+
     try {
       await updatePedido(pedidoId, payload)
       setPedidos(pedidos.map(p => 
@@ -166,6 +172,22 @@ const PainelPedidos = () => {
       .filter((p) => p.status === 'faturado')
       .sort((a, b) => parsePedidoDate(b) - parsePedidoDate(a))
   }, [pedidos])
+
+  const totalConcluidosPages = useMemo(() => {
+    return Math.max(1, Math.ceil(concluidosPedidos.length / CONCLUIDOS_PAGE_SIZE))
+  }, [concluidosPedidos.length])
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(concluidosPedidos.length / CONCLUIDOS_PAGE_SIZE) - 1)
+    if (concluidosPage > maxPage) {
+      setConcluidosPage(maxPage)
+    }
+  }, [concluidosPedidos.length, concluidosPage])
+
+  const paginatedConcluidos = useMemo(() => {
+    const start = concluidosPage * CONCLUIDOS_PAGE_SIZE
+    return concluidosPedidos.slice(start, start + CONCLUIDOS_PAGE_SIZE)
+  }, [concluidosPedidos, concluidosPage])
 
   const formatCurrency = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0
@@ -364,14 +386,47 @@ Obrigado pela preferência!
           {/* Concluídos */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
-              <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
+              <div className="flex items-center gap-3">
+                <h3 className="text-gray-900 dark:text-white font-semibold">Pedidos Concluídos</h3>
+                <span className="text-sm text-green-600 dark:text-green-400">{concluidosPedidos.length}</span>
+              </div>
+              {concluidosPedidos.length > CONCLUIDOS_PAGE_SIZE && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setConcluidosPage((page) => Math.max(0, page - 1))}
+                    disabled={concluidosPage === 0}
+                    className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
+                      concluidosPage === 0
+                        ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
+                        : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
+                    }`}
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-xs text-gray-500 dark:text-dark-300">
+                    {concluidosPage + 1} / {totalConcluidosPages}
+                  </span>
+                  <button
+                    onClick={() => setConcluidosPage((page) => Math.min(totalConcluidosPages - 1, page + 1))}
+                    disabled={concluidosPage >= totalConcluidosPages - 1}
+                    className={`p-1 rounded border border-gray-200 dark:border-dark-600 transition-colors ${
+                      concluidosPage >= totalConcluidosPages - 1
+                        ? 'text-gray-300 dark:text-dark-500 cursor-not-allowed'
+                        : 'text-gray-600 dark:text-dark-200 hover:bg-gray-100 dark:hover:bg-dark-700'
+                    }`}
+                    aria-label="Próxima página"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
             {concluidosPedidos.length === 0 ? (
               <p className="text-gray-500 dark:text-dark-400">Nenhum pedido concluído.</p>
             ) : (
               <div className="space-y-3">
-                {concluidosPedidos.map((pedido) => (
+                {paginatedConcluidos.map((pedido) => (
                   <PedidoCard 
                     key={pedido.id}
                     pedido={pedido}
