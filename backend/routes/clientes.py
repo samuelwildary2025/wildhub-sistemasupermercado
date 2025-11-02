@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from database import get_db
 from models.cliente import Cliente
+from models.pedido import Pedido
 from models.user import User
 from schemas.cliente import Cliente as ClienteSchema, ClienteCreate, ClienteUpdate
 from auth import get_current_user
@@ -61,10 +63,20 @@ def list_clientes(
             detail="Apenas supermercados podem listar clientes"
         )
     
-    clientes = db.query(Cliente).filter(
-        Cliente.tenant_id == current_user.tenant_id
-    ).offset(skip).limit(limit).all()
-    
+    query = (
+        db.query(Cliente, func.count(Pedido.id).label("total_pedidos"))
+        .outerjoin(Pedido, Pedido.cliente_id == Cliente.id)
+        .filter(Cliente.tenant_id == current_user.tenant_id)
+        .group_by(Cliente.id)
+        .offset(skip)
+        .limit(limit)
+    )
+
+    clientes = []
+    for cliente, total in query.all():
+        setattr(cliente, "total_pedidos", int(total or 0))
+        clientes.append(cliente)
+
     return clientes
 
 @router.get("/{cliente_id}", response_model=ClienteSchema)
@@ -91,6 +103,13 @@ def get_cliente(
             detail="Cliente não encontrado"
         )
     
+    total = (
+        db.query(func.count(Pedido.id))
+        .filter(Pedido.cliente_id == cliente.id)
+        .scalar()
+    )
+    setattr(cliente, "total_pedidos", int(total or 0))
+
     return cliente
 
 @router.put("/{cliente_id}", response_model=ClienteSchema)
