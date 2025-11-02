@@ -207,6 +207,7 @@ const PainelPedidos = () => {
   const handlePrint = (pedido) => {
     // 1. Extrair e garantir dados do cliente/pedido
     const clienteNome = pedido?.cliente_nome || pedido?.nome_cliente || pedido?.client_name || 'Cliente Desconhecido';
+    const numeroPedido = pedido?.numero_pedido ?? pedido?.id;
     
     // Usar as novas propriedades que o backend agora retorna
     const clienteTelefone = pedido?.telefone || pedido?.phone || 'Não informado';
@@ -228,7 +229,7 @@ const PainelPedidos = () => {
     const comprovante = `
 SUPERMERCADO
 -----------------------------
-PEDIDO #${pedido.id}
+PEDIDO #${numeroPedido}
 DATA: ${pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }) : '-'}
 -----------------------------
 CLIENTE: ${clienteNome}
