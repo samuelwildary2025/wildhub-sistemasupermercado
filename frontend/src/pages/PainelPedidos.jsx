@@ -356,12 +356,7 @@ Obrigado pela preferência!
         </div>
 
         {/* Ações */}
-        <div className="flex justify-end mb-6">
-          <button className="button flex items-center space-x-2">
-            <Plus size={20} />
-            <span>Novo Pedido</span>
-          </button>
-        </div>
+    
 
         {/* Duas Colunas: Em andamento x Concluídos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
