@@ -54,7 +54,7 @@ export default function Sidebar({ user, onLogout }) {
       {/* CORRIGIDO: Padding vertical aumentado (py-5) para "baixar" a linha e alinhar com o Header */}
       <div className="px-4 py-5 border-b border-gray-200 dark:border-dark-700">
         <div className="truncate text-sm font-medium text-gray-600 dark:text-gray-300">
-          {user?.email || 'admin@admin.com'}
+          {user?.nome || user?.email || 'admin@admin.com'}
         </div>
       </div>
 
