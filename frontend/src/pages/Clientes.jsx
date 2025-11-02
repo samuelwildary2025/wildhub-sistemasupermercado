@@ -94,7 +94,7 @@ const Clientes = () => {
                   <div className="flex flex-col">
                     <span className="text-gray-900 dark:text-white font-medium">{cliente.nome}</span>
                     <span className="text-xs text-gray-500 dark:text-dark-300">
-                      {getEmailLabel(cliente.email) || 'Email não informado'}
+                      
                     </span>
                   </div>
                 </td>
