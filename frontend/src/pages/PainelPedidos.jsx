@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { getPedidos, updatePedido } from '../services/api'
 import Header from '../components/Header'
 import PedidoCard from '../components/PedidoCard'
@@ -22,6 +22,7 @@ const PainelPedidos = () => {
   const CONCLUIDOS_PAGE_SIZE = 15
   const todayKey = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()), [])
   const [concluidosDateFilter, setConcluidosDateFilter] = useState(todayKey)
+  const datePickerRef = useRef(null)
 
   // obtém supermarketId do usuário logado (se houver)
   const getSupermarketId = () => {
@@ -93,6 +94,23 @@ const PainelPedidos = () => {
   const getPedidoDateKey = (pedido) => {
     const date = getPedidoDate(pedido)
     return date ? formatDateKey(date) : null
+  }
+
+  const formatDisplayDate = (key) => {
+    if (!key) return ''
+    const date = new Date(`${key}T00:00:00`)
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(date)
+  }
+
+  const openDatePicker = () => {
+    const input = datePickerRef.current
+    if (!input) return
+    if (typeof input.showPicker === 'function') {
+      input.showPicker()
+    } else {
+      input.focus()
+      input.click()
+    }
   }
 
   // Helper para calcular total do pedido de forma robusta
@@ -448,15 +466,28 @@ Obrigado pela preferência!
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <label className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
-                 
-                </label>
-                <input
-                  type="date"
-                  value={concluidosDateFilter || ''}
-                  onChange={(e) => setConcluidosDateFilter(e.target.value)}
-                  className="input w-40 py-1 text-sm"
-                />
+                <span className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
+                  Filtrar por data
+                </span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={openDatePicker}
+                    className="button-outline px-3 py-1 flex items-center justify-center text-sm"
+                    aria-label="Selecionar data"
+                  >
+                    <Calendar size={16} />
+                  </button>
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    value={concluidosDateFilter || ''}
+                    onChange={(e) => setConcluidosDateFilter(e.target.value)}
+                    className="absolute inset-0 opacity-0 pointer-events-none"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </div>
                 <button
                   onClick={() => setConcluidosDateFilter(todayKey)}
                   className="button-outline text-xs px-3 py-1"
@@ -471,7 +502,8 @@ Obrigado pela preferência!
                 </button>
                 {concluidosDateFilter && (
                   <span className="text-xs text-gray-500 dark:text-dark-400">
-                         </span>
+                    Exibindo pedidos de {formatDisplayDate(concluidosDateFilter)}
+                  </span>
                 )}
               </div>
             </div>
