@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Home, ShoppingCart, BarChart3, Building2, DollarSign, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, ShoppingCart, BarChart3, Building2, DollarSign, LogOut, ChevronLeft, ChevronRight, Users } from 'lucide-react'
 
 export default function Sidebar({ user, onLogout }) {
   const navigate = useNavigate()
@@ -19,6 +19,7 @@ export default function Sidebar({ user, onLogout }) {
 
   const clientMenuItems = [
     { to: '/pedidos', label: 'Pedidos', icon: <ShoppingCart size={18} /> },
+    { to: '/clientes', label: 'Clientes', icon: <Users size={18} /> },
     { to: '/analytics', label: 'Analytics', icon: <BarChart3 size={18} /> }
   ]
 
