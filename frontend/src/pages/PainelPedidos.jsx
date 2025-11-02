@@ -447,7 +447,7 @@ Obrigado pela preferência!
 
               <div className="flex flex-wrap items-center gap-3">
                 <label className="text-xs font-medium text-gray-500 dark:text-dark-300 tracking-wide uppercase">
-                  Filtrar por data
+                 
                 </label>
                 <input
                   type="date"
