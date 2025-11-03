@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -18,10 +18,10 @@ class Pedido(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("supermarkets.id"), nullable=False)
-    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True)  # Novo campo para cliente
-    nome_cliente = Column(String, nullable=False)  # Mantido para compatibilidade
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True)
+    nome_cliente = Column(String, nullable=False)
     valor_total = Column(Float, nullable=False, default=0.0)
-    status = Column(String, default="pendente")  # pendente, faturado
+    status = Column(String, default="pendente")
     data_pedido = Column(DateTime, default=_now_brt_naive)
     numero_pedido = Column(Integer, nullable=False, default=0)
     
@@ -31,6 +31,8 @@ class Pedido(Base):
     observacao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
     
+    foi_alterado = Column(Boolean, default=False) # <--- NOVO CAMPO: Indicador visual
+
     # Relacionamentos
     supermarket = relationship("Supermarket", back_populates="pedidos")
     cliente = relationship("Cliente", back_populates="pedidos")
