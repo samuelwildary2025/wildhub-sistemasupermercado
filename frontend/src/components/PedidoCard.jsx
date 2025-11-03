@@ -40,11 +40,9 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
   }
 
   // Realça pedidos alterados via PUT
-  const hasUpdates = Boolean(pedido.foi_alterado) // <--- LENDO O CAMPO 'foi_alterado'
+  const hasUpdates = Boolean(pedido.foi_alterado)
 
-  // Adicionado 'relative' para posicionar o indicador ABSOLUTE
-  const cardBaseClasses = 'transition-colors rounded-lg p-3 border cursor-pointer relative' 
-  // Classes visuais de alerta
+  const cardBaseClasses = 'transition-colors rounded-lg p-3 border cursor-pointer'
   const normalClasses = 'bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border-gray-200 dark:border-dark-700'
   const alteredClasses = 'bg-red-50 border-red-400 hover:bg-red-100 dark:bg-red-900/40 dark:border-red-500 dark:hover:bg-red-900/60 shake-alert'
 
@@ -55,16 +53,8 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
   return (
     <div 
       className={cardClasses}
-      onClick={() => onOpen(pedido)} 
+      onClick={() => onOpen(pedido)} // Adicionado o onOpen ao card inteiro
     >
-      {/* NOVO INDICADOR VISUAL */}
-      {hasUpdates && (
-        // Adiciona um chip de alerta piscante no canto superior direito
-        <div className="absolute top-2 right-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-600 text-white dark:bg-red-700 dark:text-red-100 animate-pulse">
-            ALTERADO!
-        </div>
-      )}
-      
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Texto preto no modo claro / branco no dark */}
@@ -80,7 +70,6 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-2 text-sm">
           <Calendar size={14} className="text-gray-500 dark:text-dark-400" />
-          {/* Cor do texto da data também muda para ALERT se o pedido foi alterado */}
           <span className={`text-gray-600 dark:text-dark-300 ${hasUpdates ? 'font-medium text-red-700 dark:text-red-200' : ''}`}>
             {formatDate(pedido.data_pedido)}
           </span>
