@@ -33,12 +33,6 @@ def _ensure_numero_pedido_column(db: Session) -> None:
             connection.execute(text("ALTER TABLE pedidos ADD COLUMN numero_pedido INTEGER DEFAULT 0"))
             connection.commit()
 
-    if "foi_alterado" not in column_names:
-        with engine.connect() as connection:
-            connection.execute(text("ALTER TABLE pedidos ADD COLUMN foi_alterado BOOLEAN DEFAULT 0"))
-            connection.execute(text("UPDATE pedidos SET foi_alterado = 0 WHERE foi_alterado IS NULL"))
-            connection.commit()
-
     pedidos_sem_numero = (
         db.query(Pedido)
         .filter((Pedido.numero_pedido == None) | (Pedido.numero_pedido == 0))
@@ -160,7 +154,6 @@ def create_pedido(
             "nome_cliente": pedido.nome_cliente,
             "valor_total": valor_total,
             "numero_pedido": next_numero,
-            "foi_alterado": False,
         }
         if cliente_entity:
             create_kwargs["cliente_id"] = cliente_entity.id
@@ -364,7 +357,6 @@ def update_pedido(
         "nome_cliente": pedido.nome_cliente,
         "status": pedido.status,
         "valor_total": pedido.valor_total,
-        "foi_alterado": getattr(pedido, "foi_alterado", False),
         "itens": [
             {
                 "id": item.id,
@@ -430,9 +422,6 @@ def update_pedido(
             pedido.valor_total = float(provided_total)
             update_fields["valor_total"] = pedido.valor_total
 
-        pedido.foi_alterado = True
-        update_fields["foi_alterado"] = True
-
         db.commit()
         refreshed = (
             db.query(Pedido)
@@ -448,7 +437,6 @@ def update_pedido(
             "nome_cliente": refreshed.nome_cliente,
             "status": refreshed.status,
             "valor_total": refreshed.valor_total,
-            "foi_alterado": getattr(refreshed, "foi_alterado", False),
             "itens": [
                 {
                     "id": item.id,
