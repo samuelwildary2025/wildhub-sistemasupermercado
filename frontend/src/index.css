@@ -105,3 +105,16 @@ p {
     @apply text-sm px-3 py-1.5;
   }
 }
+
+/* ================================
+   🛎️ Destaque para pedidos alterados
+================================= */
+@keyframes shake-alert {
+  0% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  100% { transform: translateX(-2px); }
+}
+
+.shake-alert {
+  animation: shake-alert 0.45s ease-in-out infinite;
+}
