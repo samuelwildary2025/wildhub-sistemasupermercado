@@ -375,7 +375,7 @@ def delete_pedido(
         raise HTTPException(status_code=500, detail="Erro ao excluir pedido")
 
 # ==============================================
-# ✏️ Atualizar pedido via número de telefone
+# ✏️ Atualizar pedido via número de telefone (com itens)
 # ==============================================
 @router.put("/telefone/{telefone}", response_model=PedidoResponse)
 def update_pedido_por_telefone(
@@ -385,7 +385,8 @@ def update_pedido_por_telefone(
     token_info: dict = Depends(validate_custom_token_or_jwt)
 ):
     """
-    Atualiza um pedido existente com base no número de telefone.
+    Atualiza um pedido existente com base no número de telefone,
+    incluindo atualização dos itens (substitui os antigos pelos novos).
     """
     _ensure_numero_pedido_column(db)
 
@@ -422,7 +423,29 @@ def update_pedido_por_telefone(
     try:
         # Atualiza apenas os campos enviados
         for field, value in update_data.items():
-            setattr(pedido, field, value)
+            if field != "itens":  # Itens serão tratados separadamente
+                setattr(pedido, field, value)
+
+        # 🔄 Se vierem novos itens, substitui todos
+        if "itens" in update_data and update_data["itens"]:
+            # Remove os itens antigos
+            db.query(ItemPedido).filter(ItemPedido.pedido_id == pedido.id).delete()
+
+            # Cria os novos itens
+            for item in update_data["itens"]:
+                novo_item = ItemPedido(
+                    pedido_id=pedido.id,
+                    nome_produto=item["nome_produto"],
+                    quantidade=item["quantidade"],
+                    preco_unitario=item["preco_unitario"],
+                )
+                db.add(novo_item)
+
+            # Recalcula o total do pedido
+            pedido.valor_total = sum(
+                item["quantidade"] * item["preco_unitario"]
+                for item in update_data["itens"]
+            )
 
         db.commit()
         db.refresh(pedido)
@@ -437,9 +460,17 @@ def update_pedido_por_telefone(
             success=True,
         )
 
-        return pedido
+        # Retorna o pedido com itens atualizados
+        pedido_atualizado = (
+            db.query(Pedido)
+            .options(selectinload(Pedido.itens))
+            .filter(Pedido.id == pedido.id)
+            .first()
+        )
+        return pedido_atualizado
 
     except Exception as e:
+        db.rollback()
         log_event(
             "update",
             "pedido_por_telefone",
@@ -454,4 +485,5 @@ def update_pedido_por_telefone(
             status_code=500,
             detail=f"Erro ao atualizar pedido via telefone: {str(e)}"
         )
+
 
