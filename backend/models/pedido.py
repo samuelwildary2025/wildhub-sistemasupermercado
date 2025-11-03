@@ -31,7 +31,7 @@ class Pedido(Base):
     observacao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
     
-    foi_alterado = Column(Boolean, default=False) # <--- NOVO CAMPO: Indicador visual
+    foi_alterado = Column(Boolean, default=False) # <--- MANTIDO NO MODELO
 
     # Relacionamentos
     supermarket = relationship("Supermarket", back_populates="pedidos")
