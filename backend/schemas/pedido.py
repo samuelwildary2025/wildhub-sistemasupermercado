@@ -68,20 +68,6 @@ class PedidoCreate(BaseModel):
 class PedidoUpdate(BaseModel):
     nome_cliente: Optional[str] = None
     status: Optional[str] = None
-    forma: Optional[str] = None
-    endereco: Optional[str] = None
-    observacao: Optional[str] = None
-    telefone: Optional[str] = None
-    itens: Optional[List[ItemPedidoCreate]] = None
-    total: Optional[float] = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def normalize_total_alias(cls, data):
-        if isinstance(data, dict) and "total" not in data:
-            if "valor_total" in data and data["valor_total"] is not None:
-                data["total"] = data["valor_total"]
-        return data
 
 class PedidoResponse(BaseModel):
     id: int
