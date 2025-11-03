@@ -2,6 +2,32 @@ from pydantic import BaseModel, computed_field, model_validator
 from typing import List, Optional
 from datetime import datetime
 
+# Importar ItemPedidoCreate é essencial
+from .pedido import ItemPedidoCreate # <- Garanta que este import esteja correto se estiver em arquivos separados, mas aqui já está no topo.
+
+# ... (Outras classes: ItemPedidoCreate, ItemPedidoResponse, PedidoCreate)
+
+class PedidoUpdate(BaseModel):
+    # Campos básicos que podem ser atualizados
+    nome_cliente: Optional[str] = None
+    status: Optional[str] = None
+    
+    # NOVOS CAMPOS PARA PERMITIR A ATUALIZAÇÃO (incluindo a lista de itens)
+    # Adicionar 'itens' (o principal problema)
+    itens: Optional[List[ItemPedidoCreate]] = None 
+    
+    # Adicionar campos opcionais que foram incluídos no modelo/create
+    forma: Optional[str] = None
+    endereco: Optional[str] = None
+    observacao: Optional[str] = None
+    telefone: Optional[str] = None
+    
+    # Campos de tempo e validação (opcional)
+    created_at: Optional[datetime] = None
+    total: Optional[float] = None # Para validação cruzada
+
+# ... (Resto do arquivo)
+
 class ItemPedidoCreate(BaseModel):
     nome_produto: str
     quantidade: int
