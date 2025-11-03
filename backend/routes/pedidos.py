@@ -20,14 +20,17 @@ def update_pedido_por_telefone(
         tenant_id = token_info["supermarket_id"]
         user_email = f"custom_token_{token_info['supermarket'].email}"
 
-    # 🔎 Buscar o pedido pelo telefone
+    # 🔎 Buscar o pedido pelo telefone e tenant
     query = db.query(Pedido).filter(Pedido.telefone == telefone)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
 
     pedido = query.first()
     if not pedido:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado para esse telefone")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido não encontrado para esse telefone"
+        )
 
     before_snapshot = {
         "nome_cliente": pedido.nome_cliente,
@@ -68,4 +71,7 @@ def update_pedido_por_telefone(
             success=False,
             message=str(e),
         )
-        raise HTTPException(status_code=500, detail="Erro ao atualizar pedido via telefone")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao atualizar pedido via telefone: {str(e)}"
+        )
