@@ -375,7 +375,7 @@ def delete_pedido(
         raise HTTPException(status_code=500, detail="Erro ao excluir pedido")
 
 # ==============================================
-# ✏️ Atualizar pedido via número de telefone (com itens)
+# ✏️ Atualizar pedido via número de telefone (com atualização de itens)
 # ==============================================
 @router.put("/telefone/{telefone}", response_model=PedidoResponse)
 def update_pedido_por_telefone(
@@ -384,33 +384,25 @@ def update_pedido_por_telefone(
     db: Session = Depends(get_db),
     token_info: dict = Depends(validate_custom_token_or_jwt)
 ):
-    """
-    Atualiza um pedido existente com base no número de telefone,
-    incluindo atualização dos itens (substitui os antigos pelos novos).
-    """
     _ensure_numero_pedido_column(db)
 
-    # 🔐 Obter tenant_id com base no tipo de token (igual à rota create)
+    # 🔐 Obter tenant_id
     if token_info["type"] == "jwt":
         current_user = token_info["user"]
         tenant_id = token_info["supermarket_id"]
         user_email = current_user.email
     else:
-        current_user = None
         tenant_id = token_info["supermarket_id"]
         user_email = f"custom_token_{token_info['supermarket'].email}"
 
-    # 🔎 Buscar o pedido pelo telefone e tenant
+    # 🔎 Buscar pedido pelo telefone
     query = db.query(Pedido).filter(Pedido.telefone == telefone)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
 
     pedido = query.first()
     if not pedido:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pedido não encontrado para esse telefone"
-        )
+        raise HTTPException(status_code=404, detail="Pedido não encontrado para esse telefone")
 
     before_snapshot = {
         "nome_cliente": pedido.nome_cliente,
@@ -421,31 +413,25 @@ def update_pedido_por_telefone(
     update_data = pedido_update.dict(exclude_unset=True)
 
     try:
-        # Atualiza apenas os campos enviados
+        # Atualiza campos principais
         for field, value in update_data.items():
-            if field != "itens":  # Itens serão tratados separadamente
+            if field != "itens":
                 setattr(pedido, field, value)
 
-        # 🔄 Se vierem novos itens, substitui todos
-        if "itens" in update_data and update_data["itens"]:
-            # Remove os itens antigos
+        # Atualiza itens se enviados
+        if "itens" in update_data and pedido_update.itens:
             db.query(ItemPedido).filter(ItemPedido.pedido_id == pedido.id).delete()
-
-            # Cria os novos itens
-            for item in update_data["itens"]:
-                novo_item = ItemPedido(
+            novo_total = 0.0
+            for item in pedido_update.itens:
+                db_item = ItemPedido(
                     pedido_id=pedido.id,
-                    nome_produto=item["nome_produto"],
-                    quantidade=item["quantidade"],
-                    preco_unitario=item["preco_unitario"],
+                    nome_produto=item.nome_produto,
+                    quantidade=item.quantidade,
+                    preco_unitario=item.preco_unitario
                 )
-                db.add(novo_item)
-
-            # Recalcula o total do pedido
-            pedido.valor_total = sum(
-                item["quantidade"] * item["preco_unitario"]
-                for item in update_data["itens"]
-            )
+                novo_total += item.quantidade * item.preco_unitario
+                db.add(db_item)
+            pedido.valor_total = round(novo_total, 2)
 
         db.commit()
         db.refresh(pedido)
@@ -460,14 +446,7 @@ def update_pedido_por_telefone(
             success=True,
         )
 
-        # Retorna o pedido com itens atualizados
-        pedido_atualizado = (
-            db.query(Pedido)
-            .options(selectinload(Pedido.itens))
-            .filter(Pedido.id == pedido.id)
-            .first()
-        )
-        return pedido_atualizado
+        return pedido
 
     except Exception as e:
         db.rollback()
@@ -481,9 +460,4 @@ def update_pedido_por_telefone(
             success=False,
             message=str(e),
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao atualizar pedido via telefone: {str(e)}"
-        )
-
-
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar pedido via telefone: {str(e)}")
