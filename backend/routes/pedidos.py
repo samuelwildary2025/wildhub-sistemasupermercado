@@ -339,25 +339,109 @@ def update_pedido(
     if not pedido:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado")
 
-    before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total}
-    update_data = pedido_update.dict(exclude_unset=True)
+    before_snapshot = {
+        "nome_cliente": pedido.nome_cliente,
+        "status": pedido.status,
+        "valor_total": pedido.valor_total,
+        "itens": [
+            {
+                "id": item.id,
+                "nome_produto": item.nome_produto,
+                "quantidade": item.quantidade,
+                "preco_unitario": item.preco_unitario,
+            }
+            for item in pedido.itens
+        ],
+    }
+    incoming_payload = pedido_update.model_dump(exclude_unset=True)
+    itens_payload = incoming_payload.pop("itens", None)
+    provided_total = incoming_payload.pop("total", None)
+    update_fields: dict = {}
     try:
-        # Aplicar alterações e efetivar
-        for field, value in update_data.items():
+        # Aplicar alterações simples primeiro
+        for field, value in incoming_payload.items():
             setattr(pedido, field, value)
-        db.commit()
-        db.refresh(pedido)
+            update_fields[field] = value
 
-        refreshed = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+        if itens_payload is not None:
+            new_items_summary = []
+            new_total = 0.0
+
+            # Remove itens atuais
+            for existing in list(pedido.itens):
+                db.delete(existing)
+            db.flush()
+
+            # Cria novos itens conforme payload
+            for item_data in itens_payload:
+                nome_produto = item_data["nome_produto"]
+                quantidade = int(item_data["quantidade"])
+                preco_unitario = float(item_data["preco_unitario"])
+
+                db_item = ItemPedido(
+                    pedido=pedido,
+                    nome_produto=nome_produto,
+                    quantidade=quantidade,
+                    preco_unitario=preco_unitario,
+                )
+                db.add(db_item)
+                new_total += quantidade * preco_unitario
+                new_items_summary.append(
+                    {
+                        "nome_produto": nome_produto,
+                        "quantidade": quantidade,
+                        "preco_unitario": preco_unitario,
+                    }
+                )
+
+            if provided_total is not None:
+                provided_total_value = float(provided_total)
+                if abs(provided_total_value - new_total) > 0.01:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Valor total informado ({provided_total_value}) difere do calculado pelos itens ({new_total}).",
+                    )
+                pedido.valor_total = provided_total_value
+            else:
+                pedido.valor_total = new_total
+
+            update_fields["itens"] = new_items_summary
+            update_fields["valor_total"] = pedido.valor_total
+        elif provided_total is not None:
+            pedido.valor_total = float(provided_total)
+            update_fields["valor_total"] = pedido.valor_total
+
+        db.commit()
+        refreshed = (
+            db.query(Pedido)
+            .options(selectinload(Pedido.itens))
+            .filter(Pedido.id == pedido_id)
+            .first()
+        )
+
         if not refreshed:
-            log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_data, success=False, message="Pedido desapareceu após update")
+            log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_fields, success=False, message="Pedido desapareceu após update")
             raise HTTPException(status_code=500, detail="Falha ao atualizar pedido")
-        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total}, success=True)
+        after_snapshot = {
+            "nome_cliente": refreshed.nome_cliente,
+            "status": refreshed.status,
+            "valor_total": refreshed.valor_total,
+            "itens": [
+                {
+                    "id": item.id,
+                    "nome_produto": item.nome_produto,
+                    "quantidade": item.quantidade,
+                    "preco_unitario": item.preco_unitario,
+                }
+                for item in refreshed.itens
+            ],
+        }
+        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=after_snapshot, success=True)
         return refreshed
     except HTTPException:
         raise
     except Exception as e:
-        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_data, success=False, message=str(e))
+        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_fields, success=False, message=str(e))
         raise HTTPException(status_code=500, detail="Erro ao atualizar pedido")
 
 @router.delete("/{pedido_id}")
