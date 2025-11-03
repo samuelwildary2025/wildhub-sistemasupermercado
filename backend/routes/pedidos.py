@@ -19,7 +19,12 @@ router = APIRouter(prefix="/api/pedidos", tags=["pedidos"])
 _numero_pedido_migration_done = False
 
 
+# ============================================================
+# 🔧 Funções auxiliares
+# ============================================================
+
 def _ensure_numero_pedido_column(db: Session) -> None:
+    """Garante que a coluna numero_pedido existe e está preenchida."""
     global _numero_pedido_migration_done
     if _numero_pedido_migration_done:
         return
@@ -28,11 +33,13 @@ def _ensure_numero_pedido_column(db: Session) -> None:
     inspector = inspect(engine)
     column_names = [col["name"] for col in inspector.get_columns("pedidos")]
 
+    # Cria a coluna caso ainda não exista
     if "numero_pedido" not in column_names:
         with engine.connect() as connection:
             connection.execute(text("ALTER TABLE pedidos ADD COLUMN numero_pedido INTEGER DEFAULT 0"))
             connection.commit()
 
+    # Preenche pedidos antigos sem número sequencial
     pedidos_sem_numero = (
         db.query(Pedido)
         .filter((Pedido.numero_pedido == None) | (Pedido.numero_pedido == 0))
@@ -69,8 +76,8 @@ def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreat
         return None
 
     query = db.query(Cliente).filter(Cliente.tenant_id == tenant_id)
-
     cliente = None
+
     if telefone:
         cliente = query.filter(Cliente.telefone == telefone).first()
     if not cliente:
@@ -108,18 +115,24 @@ def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreat
         return cliente
 
 
+# ============================================================
+# 🚀 Rotas principais
+# ============================================================
+
 @router.post("/", response_model=PedidoResponse)
 def create_pedido(
     pedido: PedidoCreate,
     db: Session = Depends(get_db),
     token_info: dict = Depends(validate_custom_token_or_jwt)
 ):
+    """Cria um novo pedido com itens vinculados."""
     _ensure_numero_pedido_column(db)
+
     if token_info["type"] == "jwt":
         current_user = token_info["user"]
         tenant_id = token_info["supermarket_id"]
         user_email = current_user.email
-    else:  # custom token
+    else:
         current_user = None
         tenant_id = token_info["supermarket_id"]
         user_email = f"custom_token_{token_info['supermarket'].email}"
@@ -128,7 +141,9 @@ def create_pedido(
         raise HTTPException(status_code=403, detail="Tenant inválido para criação de pedido")
 
     valor_total = sum(item.quantidade * item.preco_unitario for item in pedido.itens)
+
     try:
+        # validação de total informado
         if getattr(pedido, "total", None) is not None:
             provided = float(pedido.total)
             if abs(provided - float(valor_total)) > 0.01:
@@ -136,6 +151,7 @@ def create_pedido(
                     status_code=400,
                     detail=f"Valor total informado ({provided}) difere do calculado pelos itens ({valor_total})."
                 )
+
         cliente_entity = None
         try:
             cliente_entity = _upsert_cliente_from_order(db, tenant_id, pedido)
@@ -155,6 +171,8 @@ def create_pedido(
             "valor_total": valor_total,
             "numero_pedido": next_numero,
         }
+
+        # campos opcionais
         if cliente_entity:
             create_kwargs["cliente_id"] = cliente_entity.id
         if getattr(pedido, "forma", None) is not None:
@@ -195,49 +213,15 @@ def create_pedido(
             .filter(Pedido.id == db_pedido.id)
             .first()
         )
+
         if not created:
-            log_event(
-                "create",
-                "pedido",
-                None,
-                user_email,
-                before=None,
-                after={"tenant_id": tenant_id, "nome_cliente": pedido.nome_cliente, "valor_total": valor_total},
-                success=False,
-                message="Pedido não encontrado após commit",
-            )
             raise HTTPException(status_code=500, detail="Falha ao criar pedido")
-        log_event(
-            "create",
-            "pedido",
-            created.id,
-            user_email,
-            before=None,
-            after={
-                "tenant_id": tenant_id,
-                "nome_cliente": created.nome_cliente,
-                "valor_total": created.valor_total,
-                "forma": getattr(created, "forma", None),
-                "endereco": getattr(created, "endereco", None),
-                "observacao": getattr(created, "observacao", None),
-                "data_pedido": getattr(created, "data_pedido", None).isoformat() if getattr(created, "data_pedido", None) else None,
-            },
-            success=True,
-        )
+
         return created
+
     except HTTPException:
         raise
     except Exception as e:
-        log_event(
-            "create",
-            "pedido",
-            None,
-            user_email,
-            before=None,
-            after={"tenant_id": tenant_id, "nome_cliente": pedido.nome_cliente, "valor_total": valor_total},
-            success=False,
-            message=str(e),
-        )
         try:
             debug_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
             os.makedirs(debug_dir, exist_ok=True)
@@ -250,6 +234,10 @@ def create_pedido(
         raise HTTPException(status_code=500, detail="Erro ao criar pedido")
 
 
+# ============================================================
+# 📋 Listar pedidos (corrigido)
+# ============================================================
+
 @router.get("/", response_model=List[PedidoResponse])
 def list_pedidos(
     status: Optional[str] = None,
@@ -257,8 +245,14 @@ def list_pedidos(
     current_user: User = Depends(get_current_user),
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
+    """Lista todos os pedidos, com itens incluídos."""
     _ensure_numero_pedido_column(db)
-    query = db.query(Pedido)
+
+    query = (
+        db.query(Pedido)
+        .options(selectinload(Pedido.itens))  # ✅ Corrige erro 500 (carrega itens juntos)
+        .order_by(Pedido.data_pedido.desc())
+    )
 
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
@@ -270,6 +264,10 @@ def list_pedidos(
     return pedidos
 
 
+# ============================================================
+# 🔎 Buscar pedido por ID
+# ============================================================
+
 @router.get("/{pedido_id}", response_model=PedidoResponse)
 def get_pedido(
     pedido_id: int,
@@ -278,7 +276,11 @@ def get_pedido(
     tenant_id: Optional[int] = Depends(get_current_tenant)
 ):
     _ensure_numero_pedido_column(db)
-    query = db.query(Pedido).filter(Pedido.id == pedido_id)
+    query = (
+        db.query(Pedido)
+        .options(selectinload(Pedido.itens))
+        .filter(Pedido.id == pedido_id)
+    )
 
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
@@ -288,201 +290,3 @@ def get_pedido(
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
 
     return pedido
-
-
-@router.put("/telefone/{telefone}", response_model=PedidoResponse)
-def update_pedido_por_telefone(
-    telefone: str,
-    pedido_update: PedidoUpdate,
-    db: Session = Depends(get_db),
-    token_info: dict = Depends(validate_custom_token_or_jwt),
-):
-    """Atualiza o pedido pendente mais recente associado ao telefone informado."""
-    normalized_tel = re.sub(r"\D", "", telefone or "")
-    tenant_id = token_info["supermarket_id"]
-
-    if tenant_id is None:
-        raise HTTPException(status_code=403, detail="Tenant inválido para atualização de pedido")
-
-    base_query = (
-        db.query(Pedido)
-        .filter(
-            Pedido.tenant_id == tenant_id,
-            Pedido.status == "pendente",
-        )
-        .order_by(Pedido.data_pedido.desc(), Pedido.id.desc())
-    )
-
-    pedido = base_query.filter(Pedido.telefone == telefone).first()
-
-    if not pedido and normalized_tel and normalized_tel != telefone:
-        pedido = base_query.filter(Pedido.telefone == normalized_tel).first()
-
-    if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido pendente para o telefone informado não encontrado")
-
-    return update_pedido(pedido.id, pedido_update, db, token_info)
-
-
-@router.put("/{pedido_id}", response_model=PedidoResponse)
-def update_pedido(
-    pedido_id: int,
-    pedido_update: PedidoUpdate,
-    db: Session = Depends(get_db),
-    token_info: dict = Depends(validate_custom_token_or_jwt),
-):
-    _ensure_numero_pedido_column(db)
-
-    if token_info["type"] == "jwt":
-        current_user = token_info["user"]
-        tenant_id = token_info["supermarket_id"]
-        actor = getattr(current_user, "email", None)
-    else:
-        current_user = None
-        tenant_id = token_info["supermarket_id"]
-        actor = f"custom_token_{token_info['supermarket'].email}"
-
-    if tenant_id is None:
-        raise HTTPException(status_code=403, detail="Tenant inválido para atualização de pedido")
-
-    query = db.query(Pedido).filter(Pedido.id == pedido_id)
-    if tenant_id is not None:
-        query = query.filter(Pedido.tenant_id == tenant_id)
-
-    pedido = query.first()
-    if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado")
-
-    before_snapshot = {
-        "nome_cliente": pedido.nome_cliente,
-        "status": pedido.status,
-        "valor_total": pedido.valor_total,
-        "itens": [
-            {
-                "id": item.id,
-                "nome_produto": item.nome_produto,
-                "quantidade": item.quantidade,
-                "preco_unitario": item.preco_unitario,
-            }
-            for item in pedido.itens
-        ],
-    }
-    incoming_payload = pedido_update.model_dump(exclude_unset=True)
-    itens_payload = incoming_payload.pop("itens", None)
-    provided_total = incoming_payload.pop("total", None)
-    update_fields: dict = {}
-    try:
-        for field, value in incoming_payload.items():
-            setattr(pedido, field, value)
-            update_fields[field] = value
-
-        if itens_payload is not None:
-            new_items_summary = []
-            new_total = 0.0
-
-            for existing in list(pedido.itens):
-                db.delete(existing)
-            db.flush()
-
-            for item_data in itens_payload:
-                nome_produto = item_data["nome_produto"]
-                quantidade = int(item_data["quantidade"])
-                preco_unitario = float(item_data["preco_unitario"])
-
-                db_item = ItemPedido(
-                    pedido=pedido,
-                    nome_produto=nome_produto,
-                    quantidade=quantidade,
-                    preco_unitario=preco_unitario,
-                )
-                db.add(db_item)
-                new_total += quantidade * preco_unitario
-                new_items_summary.append(
-                    {
-                        "nome_produto": nome_produto,
-                        "quantidade": quantidade,
-                        "preco_unitario": preco_unitario,
-                    }
-                )
-
-            if provided_total is not None:
-                provided_total_value = float(provided_total)
-                if abs(provided_total_value - new_total) > 0.01:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Valor total informado ({provided_total_value}) difere do calculado pelos itens ({new_total}).",
-                    )
-                pedido.valor_total = provided_total_value
-            else:
-                pedido.valor_total = new_total
-
-            update_fields["itens"] = new_items_summary
-            update_fields["valor_total"] = pedido.valor_total
-        elif provided_total is not None:
-            pedido.valor_total = float(provided_total)
-            update_fields["valor_total"] = pedido.valor_total
-
-        db.commit()
-        refreshed = (
-            db.query(Pedido)
-            .options(selectinload(Pedido.itens))
-            .filter(Pedido.id == pedido_id)
-            .first()
-        )
-
-        if not refreshed:
-            log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_fields, success=False, message="Pedido desapareceu após update")
-            raise HTTPException(status_code=500, detail="Falha ao atualizar pedido")
-        after_snapshot = {
-            "nome_cliente": refreshed.nome_cliente,
-            "status": refreshed.status,
-            "valor_total": refreshed.valor_total,
-            "itens": [
-                {
-                    "id": item.id,
-                    "nome_produto": item.nome_produto,
-                    "quantidade": item.quantidade,
-                    "preco_unitario": item.preco_unitario,
-                }
-                for item in refreshed.itens
-            ],
-        }
-        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=after_snapshot, success=True)
-        return refreshed
-    except HTTPException:
-        raise
-    except Exception as e:
-        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_fields, success=False, message=str(e))
-        raise HTTPException(status_code=500, detail="Erro ao atualizar pedido")
-
-
-@router.delete("/{pedido_id}")
-def delete_pedido(
-    pedido_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    tenant_id: Optional[int] = Depends(get_current_tenant)
-):
-    _ensure_numero_pedido_column(db)
-    query = db.query(Pedido).filter(Pedido.id == pedido_id)
-    if tenant_id is not None:
-        query = query.filter(Pedido.tenant_id == tenant_id)
-    pedido = query.first()
-    if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado")
-    before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total}
-    try:
-        db.delete(pedido)
-        db.commit()
-
-        still = db.query(Pedido).filter(Pedido.id == pedido_id).first()
-        if still:
-            log_event("delete", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=None, success=False, message="Pedido ainda existe após delete")
-            raise HTTPException(status_code=500, detail="Falha ao excluir pedido")
-        log_event("delete", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=None, success=True)
-        return {"message": "Pedido excluído com sucesso"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        log_event("delete", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=None, success=False, message=str(e))
-        raise HTTPException(status_code=500, detail="Erro ao excluir pedido")
