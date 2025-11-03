@@ -4,6 +4,7 @@ from sqlalchemy import func, inspect, text
 import traceback
 import os
 import re
+import json
 from typing import List, Optional
 from database import get_db
 from models.pedido import Pedido, ItemPedido
@@ -323,13 +324,12 @@ def update_pedido(
     if not pedido:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado")
     
-    # >>> VALIDAÇÃO DE STATUS ADICIONADA <<<
+    # VALIDAÇÃO DE STATUS: Impede alteração se o pedido já foi faturado
     if pedido.status == "faturado":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Não é possível alterar um pedido que já foi faturado."
         )
-    # >>> FIM DA VALIDAÇÃO <<<
 
     before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total}
     update_data = pedido_update.dict(exclude_unset=True)
@@ -405,29 +405,32 @@ def update_pedido_por_telefone(
 
     # 🔐 Obter tenant_id com base no tipo de token
     if token_info["type"] == "jwt":
-        current_user = token_info["user"]
         tenant_id = token_info["supermarket_id"]
-        user_email = current_user.email
+        user_email = token_info["user"].email
     else:
         tenant_id = token_info["supermarket_id"]
         user_email = f"custom_token_{token_info['supermarket'].email}"
 
-    # 🔍 Buscar o pedido pelo telefone
-    query = db.query(Pedido).filter(Pedido.telefone == telefone)
+    # 🔍 Buscar o pedido PENDENTE mais recente pelo telefone
+    # CORREÇÃO CHAVE: Filtrar explicitamente por status="pendente"
+    query = db.query(Pedido).filter(
+        Pedido.telefone == telefone,
+        Pedido.status == "pendente"
+    )
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
 
-    pedido = query.first()
+    # Ordenar por data_pedido descendente para pegar o mais recente
+    pedido = query.order_by(Pedido.data_pedido.desc()).first()
+    
     if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado para esse telefone")
-
-    # >>> ADICIONANDO A VALIDAÇÃO DO STATUS AQUI <<<
-    if pedido.status == "faturado":
+        # Retorna erro 404 se não for encontrado NENHUM pedido PENDENTE (ignora faturado)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Não é possível alterar um pedido que já foi faturado."
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nenhum pedido PENDENTE encontrado para este telefone no seu supermercado."
         )
-    # >>> FIM DA VALIDAÇÃO <<<
+    
+    # *** REMOVIDO O BLOCO DE VALIDAÇÃO DE STATUS, POIS A BUSCA JÁ FILTRA POR PENDENTE ***
 
     before_snapshot = {
         "nome_cliente": pedido.nome_cliente,
@@ -461,6 +464,16 @@ def update_pedido_por_telefone(
                 db.add(db_item)
 
             pedido.valor_total = round(novo_total, 2)
+            update_data["valor_total"] = pedido.valor_total
+        
+        # O campo 'itens' não existe no modelo, então o removemos do dicionário de atualização
+        if "itens" in update_data:
+            del update_data["itens"]
+
+        # Aplicar outros campos do Pedido
+        for key, value in update_data.items():
+            if key not in ["valor_total", "itens"] and hasattr(pedido, key):
+                 setattr(pedido, key, value)
 
         db.commit()
         db.refresh(pedido)
