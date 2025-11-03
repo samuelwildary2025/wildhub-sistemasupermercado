@@ -21,23 +21,26 @@ RUN npm run build
 FROM python:3.11-alpine AS production
 
 # Instalar pacotes necessários
-# CORREÇÃO CRÍTICA: Adicionado 'build-base' e 'postgresql-dev' para permitir
-# a compilação e instalação do psycopg2-binary, corrigindo a falha de inicialização.
-RUN apk add --no-cache bash nginx supervisor curl build-base postgresql-dev && mkdir -p /var/log/supervisor /run/nginx /app/backend
+# CORREÇÃO: Adicionado 'build-base' e 'postgresql-dev' (dependências para psycopg2-binary)
+# O Supervisor não é mais necessário aqui, mas mantemos o bash, curl e nginx
+RUN apk add --no-cache bash nginx curl build-base postgresql-dev && \
+    mkdir -p /var/log/app /var/log/nginx /app/backend
 
 # ---------- Backend (FastAPI) ----------
 WORKDIR /app
 COPY backend/requirements.txt ./backend/
+# A instalação do psycopg2-binary agora deve funcionar
 RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/ ./backend/
 COPY backend/.env ./backend/.env
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
 # ---------- Frontend (Nginx) ----------
+# Copiar o build do frontend
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
+# Copiar a configuração unificada do Nginx
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# ---------- Supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # ---------- Configurações finais ----------
 ENV PYTHONPATH=/app
@@ -45,5 +48,6 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 80
 
-# Comando principal
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# COMANDO PRINCIPAL: Usar o script robusto para gerenciar a inicialização em ordem.
+# Ele inicia Uvicorn, espera a saúde do Uvicorn e só depois inicia o Nginx.
+CMD ["/usr/local/bin/start.sh"]
