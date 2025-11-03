@@ -21,7 +21,9 @@ RUN npm run build
 FROM python:3.11-alpine AS production
 
 # Instalar pacotes necessários
-RUN apk add --no-cache bash nginx supervisor curl && mkdir -p /var/log/supervisor /run/nginx /app/backend
+# CORREÇÃO CRÍTICA: Adicionado 'build-base' e 'postgresql-dev' para permitir
+# a compilação e instalação do psycopg2-binary, corrigindo a falha de inicialização.
+RUN apk add --no-cache bash nginx supervisor curl build-base postgresql-dev && mkdir -p /var/log/supervisor /run/nginx /app/backend
 
 # ---------- Backend (FastAPI) ----------
 WORKDIR /app
@@ -34,7 +36,7 @@ COPY backend/.env ./backend/.env
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# ---------- Supervisor ----------
+# ---------- Supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # ---------- Configurações finais ----------
