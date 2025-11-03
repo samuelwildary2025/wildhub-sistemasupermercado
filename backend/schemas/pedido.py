@@ -6,13 +6,11 @@ class ItemPedidoCreate(BaseModel):
     nome_produto: str
     quantidade: int
     preco_unitario: float
-    # Aceita subtotal no payload, mesmo sem persistir em coluna dedicada
     subtotal: Optional[float] = None
 
     @model_validator(mode="before")
     @classmethod
     def normalize_item(cls, data):
-        # Permite itens com campos alternativos: produto/nome -> nome_produto
         if isinstance(data, dict):
             if "nome_produto" not in data:
                 if "produto" in data and data["produto"]:
@@ -41,20 +39,16 @@ class ItemPedidoResponse(BaseModel):
 class PedidoCreate(BaseModel):
     nome_cliente: str
     itens: List[ItemPedidoCreate]
-    # Novos campos aceitos no payload
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
     telefone: Optional[str] = None 
-    # created_at será mapeado para data_pedido
     created_at: Optional[datetime] = None
-    # total do pedido para validação cruzada (opcional)
     total: Optional[float] = None
 
     @model_validator(mode="before")
     @classmethod
     def normalize_payload(cls, data):
-        # Aceita formato alternativo com cliente.nome
         if isinstance(data, dict):
             if "nome_cliente" not in data:
                 cliente = data.get("cliente")
@@ -62,15 +56,11 @@ class PedidoCreate(BaseModel):
                     nome = cliente.get("nome")
                     if nome:
                         data["nome_cliente"] = nome
-            # Itens são normalizados pelo validador de ItemPedidoCreate
         return data
 
-# CLASSE CORRIGIDA: Contém todos os campos para permitir a atualização via PUT
 class PedidoUpdate(BaseModel):
     nome_cliente: Optional[str] = None
     status: Optional[str] = None
-    
-    # Campos adicionados para permitir a alteração completa do pedido
     itens: Optional[List[ItemPedidoCreate]] = None 
     forma: Optional[str] = None
     endereco: Optional[str] = None
@@ -78,9 +68,7 @@ class PedidoUpdate(BaseModel):
     telefone: Optional[str] = None
     created_at: Optional[datetime] = None
     total: Optional[float] = None
-    
-    foi_alterado: Optional[bool] = None # <--- NOVO CAMPO: Permite resetar ou forçar
-
+    foi_alterado: Optional[bool] = None
 
 class PedidoResponse(BaseModel):
     id: int
@@ -95,8 +83,7 @@ class PedidoResponse(BaseModel):
     observacao: Optional[str] = None
     telefone: Optional[str] = None
     itens: List[ItemPedidoResponse]
-    
-    foi_alterado: bool = False # <--- NOVO CAMPO: Retorno para o frontend
+    foi_alterado: bool = False
     
     class Config:
         from_attributes = True
