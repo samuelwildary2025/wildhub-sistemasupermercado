@@ -31,7 +31,7 @@ class Pedido(Base):
     observacao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
     
-    foi_alterado = Column(Boolean, default=False) # <--- MANTIDO NO MODELO
+    foi_alterado = Column(Boolean, default=False) # <--- CAMPO NOVO (Essencial)
 
     # Relacionamentos
     supermarket = relationship("Supermarket", back_populates="pedidos")
