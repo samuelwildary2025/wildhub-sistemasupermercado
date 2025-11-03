@@ -39,12 +39,20 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
     }
   }
 
-  // CORRIGIDO: Cores dinâmicas para funcionar no modo claro
+  // Realça pedidos alterados via PUT
+  const hasUpdates = Boolean(pedido.foi_alterado)
+
+  const cardBaseClasses = 'transition-colors rounded-lg p-3 border cursor-pointer'
+  const normalClasses = 'bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border-gray-200 dark:border-dark-700'
+  const alteredClasses = 'bg-red-50 border-red-400 hover:bg-red-100 dark:bg-red-900/40 dark:border-red-500 dark:hover:bg-red-900/60 shake-alert'
+
+  const cardClasses = `${cardBaseClasses} ${hasUpdates ? alteredClasses : normalClasses}`
+
   const numeroVisivel = pedido?.numero_pedido ?? pedido.id
 
   return (
     <div 
-      className="bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors rounded-lg p-3 border border-gray-200 dark:border-dark-700 cursor-pointer"
+      className={cardClasses}
       onClick={() => onOpen(pedido)} // Adicionado o onOpen ao card inteiro
     >
       <div className="flex items-center justify-between">
@@ -62,11 +70,15 @@ const PedidoCard = ({ pedido, onStatusChange, onOpen }) => {
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-2 text-sm">
           <Calendar size={14} className="text-gray-500 dark:text-dark-400" />
-          <span className="text-gray-600 dark:text-dark-300">{formatDate(pedido.data_pedido)}</span>
+          <span className={`text-gray-600 dark:text-dark-300 ${hasUpdates ? 'font-medium text-red-700 dark:text-red-200' : ''}`}>
+            {formatDate(pedido.data_pedido)}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {/* Valor com cor verde no modo claro/escuro */}
-          <span className="text-green-600 dark:text-green-400 font-semibold">{formatCurrency(pedido.valor_total)}</span>
+          <span className={`${hasUpdates ? 'text-red-600 dark:text-red-300' : 'text-green-600 dark:text-green-400'} font-semibold`}>
+            {formatCurrency(pedido.valor_total)}
+          </span>
           {/* Botão de detalhes (se não houver um botão de ação de status aqui) */}
           <button
             onClick={(e) => { e.stopPropagation(); onOpen(pedido) }}
