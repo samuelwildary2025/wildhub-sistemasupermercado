@@ -307,6 +307,51 @@ def get_pedido(
     
     return pedido
 
+@router.put("/telefone/{telefone}", response_model=PedidoResponse)
+def update_pedido_por_telefone(
+    telefone: str,
+    pedido_update: PedidoUpdate,
+    db: Session = Depends(get_db),
+    token_info: dict = Depends(validate_custom_token_or_jwt),
+):
+    """Atualiza o pedido pendente mais recente associado ao telefone informado."""
+    # Normaliza telefone removendo caracteres não numéricos
+    normalized_tel = re.sub(r"\D", "", telefone or "")
+
+    # Determina tenant e delega para rota principal
+    if token_info["type"] == "jwt":
+        tenant_id = token_info["supermarket_id"]
+    else:
+        tenant_id = token_info["supermarket_id"]
+
+    if tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant inválido para atualização de pedido",
+        )
+
+    base_query = (
+        db.query(Pedido)
+        .filter(
+            Pedido.tenant_id == tenant_id,
+            Pedido.status == "pendente",
+        )
+        .order_by(Pedido.data_pedido.desc(), Pedido.id.desc())
+    )
+
+    pedido = base_query.filter(Pedido.telefone == telefone).first()
+
+    if not pedido and normalized_tel and normalized_tel != telefone:
+        pedido = base_query.filter(Pedido.telefone == normalized_tel).first()
+
+    if not pedido:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido pendente para o telefone informado não encontrado",
+        )
+
+    return update_pedido(pedido.id, pedido_update, db, token_info)
+
 @router.put("/{pedido_id}", response_model=PedidoResponse)
 def update_pedido(
     pedido_id: int,
