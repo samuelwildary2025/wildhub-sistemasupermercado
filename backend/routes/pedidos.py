@@ -312,16 +312,33 @@ def update_pedido(
     pedido_id: int,
     pedido_update: PedidoUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    tenant_id: Optional[int] = Depends(get_current_tenant)
+    token_info: dict = Depends(validate_custom_token_or_jwt),
 ):
     _ensure_numero_pedido_column(db)
+
+    if token_info["type"] == "jwt":
+        current_user = token_info["user"]
+        tenant_id = token_info["supermarket_id"]
+        actor = getattr(current_user, "email", None)
+    else:
+        current_user = None
+        tenant_id = token_info["supermarket_id"]
+        actor = f"custom_token_{token_info['supermarket'].email}"
+
+    if tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant inválido para atualização de pedido",
+        )
+
     query = db.query(Pedido).filter(Pedido.id == pedido_id)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
+
     pedido = query.first()
     if not pedido:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado")
+
     before_snapshot = {"nome_cliente": pedido.nome_cliente, "status": pedido.status, "valor_total": pedido.valor_total}
     update_data = pedido_update.dict(exclude_unset=True)
     try:
@@ -333,14 +350,14 @@ def update_pedido(
 
         refreshed = db.query(Pedido).filter(Pedido.id == pedido_id).first()
         if not refreshed:
-            log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=update_data, success=False, message="Pedido desapareceu após update")
+            log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_data, success=False, message="Pedido desapareceu após update")
             raise HTTPException(status_code=500, detail="Falha ao atualizar pedido")
-        log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total}, success=True)
+        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total}, success=True)
         return refreshed
     except HTTPException:
         raise
     except Exception as e:
-        log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=update_data, success=False, message=str(e))
+        log_event("update", "pedido", pedido_id, actor, before=before_snapshot, after=update_data, success=False, message=str(e))
         raise HTTPException(status_code=500, detail="Erro ao atualizar pedido")
 
 @router.delete("/{pedido_id}")
