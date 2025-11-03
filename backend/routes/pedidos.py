@@ -375,7 +375,7 @@ def delete_pedido(
         raise HTTPException(status_code=500, detail="Erro ao excluir pedido")
 
 # ==============================================
-# ✏️ Atualizar pedido via número de telefone (com atualização de itens)
+# ✏️ Atualizar pedido via número de telefone (com atualização de itens e total)
 # ==============================================
 @router.put("/telefone/{telefone}", response_model=PedidoResponse)
 def update_pedido_por_telefone(
@@ -386,7 +386,7 @@ def update_pedido_por_telefone(
 ):
     _ensure_numero_pedido_column(db)
 
-    # 🔐 Obter tenant_id
+    # 🔐 Obter tenant_id com base no tipo de token
     if token_info["type"] == "jwt":
         current_user = token_info["user"]
         tenant_id = token_info["supermarket_id"]
@@ -395,7 +395,7 @@ def update_pedido_por_telefone(
         tenant_id = token_info["supermarket_id"]
         user_email = f"custom_token_{token_info['supermarket'].email}"
 
-    # 🔎 Buscar pedido pelo telefone
+    # 🔍 Buscar o pedido pelo telefone
     query = db.query(Pedido).filter(Pedido.telefone == telefone)
     if tenant_id is not None:
         query = query.filter(Pedido.tenant_id == tenant_id)
@@ -413,24 +413,28 @@ def update_pedido_por_telefone(
     update_data = pedido_update.dict(exclude_unset=True)
 
     try:
-        # Atualiza campos principais
+        # Atualiza campos principais do pedido
         for field, value in update_data.items():
             if field != "itens":
                 setattr(pedido, field, value)
 
-        # Atualiza itens se enviados
+        # Atualiza os itens, se enviados
         if "itens" in update_data and pedido_update.itens:
+            # Apaga os itens antigos
             db.query(ItemPedido).filter(ItemPedido.pedido_id == pedido.id).delete()
+
             novo_total = 0.0
             for item in pedido_update.itens:
+                subtotal = item.quantidade * item.preco_unitario
+                novo_total += subtotal
                 db_item = ItemPedido(
                     pedido_id=pedido.id,
                     nome_produto=item.nome_produto,
                     quantidade=item.quantidade,
                     preco_unitario=item.preco_unitario
                 )
-                novo_total += item.quantidade * item.preco_unitario
                 db.add(db_item)
+
             pedido.valor_total = round(novo_total, 2)
 
         db.commit()
