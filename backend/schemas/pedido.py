@@ -45,7 +45,7 @@ class PedidoCreate(BaseModel):
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
-    telefone: Optional[str] = None
+    telefone: Optional[str] = None 
     # created_at será mapeado para data_pedido
     created_at: Optional[datetime] = None
     # total do pedido para validação cruzada (opcional)
@@ -78,6 +78,8 @@ class PedidoUpdate(BaseModel):
     telefone: Optional[str] = None
     created_at: Optional[datetime] = None
     total: Optional[float] = None
+    
+    foi_alterado: Optional[bool] = None # <--- NOVO CAMPO: Permite resetar ou forçar
 
 
 class PedidoResponse(BaseModel):
@@ -93,6 +95,8 @@ class PedidoResponse(BaseModel):
     observacao: Optional[str] = None
     telefone: Optional[str] = None
     itens: List[ItemPedidoResponse]
+    
+    foi_alterado: bool = False # <--- NOVO CAMPO: Retorno para o frontend
     
     class Config:
         from_attributes = True
