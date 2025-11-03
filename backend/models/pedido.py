@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -30,6 +30,7 @@ class Pedido(Base):
     endereco = Column(String, nullable=True)
     observacao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
+    foi_alterado = Column(Boolean, nullable=False, default=False)
     
     # Relacionamentos
     supermarket = relationship("Supermarket", back_populates="pedidos")
