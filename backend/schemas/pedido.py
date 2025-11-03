@@ -2,32 +2,6 @@ from pydantic import BaseModel, computed_field, model_validator
 from typing import List, Optional
 from datetime import datetime
 
-# Importar ItemPedidoCreate é essencial
-from .pedido import ItemPedidoCreate # <- Garanta que este import esteja correto se estiver em arquivos separados, mas aqui já está no topo.
-
-# ... (Outras classes: ItemPedidoCreate, ItemPedidoResponse, PedidoCreate)
-
-class PedidoUpdate(BaseModel):
-    # Campos básicos que podem ser atualizados
-    nome_cliente: Optional[str] = None
-    status: Optional[str] = None
-    
-    # NOVOS CAMPOS PARA PERMITIR A ATUALIZAÇÃO (incluindo a lista de itens)
-    # Adicionar 'itens' (o principal problema)
-    itens: Optional[List[ItemPedidoCreate]] = None 
-    
-    # Adicionar campos opcionais que foram incluídos no modelo/create
-    forma: Optional[str] = None
-    endereco: Optional[str] = None
-    observacao: Optional[str] = None
-    telefone: Optional[str] = None
-    
-    # Campos de tempo e validação (opcional)
-    created_at: Optional[datetime] = None
-    total: Optional[float] = None # Para validação cruzada
-
-# ... (Resto do arquivo)
-
 class ItemPedidoCreate(BaseModel):
     nome_produto: str
     quantidade: int
@@ -71,7 +45,7 @@ class PedidoCreate(BaseModel):
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
-    telefone: Optional[str] = None # <-- NOVO: Adicionado para receber o telefone
+    telefone: Optional[str] = None
     # created_at será mapeado para data_pedido
     created_at: Optional[datetime] = None
     # total do pedido para validação cruzada (opcional)
@@ -91,9 +65,20 @@ class PedidoCreate(BaseModel):
             # Itens são normalizados pelo validador de ItemPedidoCreate
         return data
 
+# CLASSE CORRIGIDA: Contém todos os campos para permitir a atualização via PUT
 class PedidoUpdate(BaseModel):
     nome_cliente: Optional[str] = None
     status: Optional[str] = None
+    
+    # Campos adicionados para permitir a alteração completa do pedido
+    itens: Optional[List[ItemPedidoCreate]] = None 
+    forma: Optional[str] = None
+    endereco: Optional[str] = None
+    observacao: Optional[str] = None
+    telefone: Optional[str] = None
+    created_at: Optional[datetime] = None
+    total: Optional[float] = None
+
 
 class PedidoResponse(BaseModel):
     id: int
@@ -106,7 +91,7 @@ class PedidoResponse(BaseModel):
     forma: Optional[str] = None
     endereco: Optional[str] = None
     observacao: Optional[str] = None
-    telefone: Optional[str] = None # <-- NOVO: Adicionado para incluir o telefone na resposta da API
+    telefone: Optional[str] = None
     itens: List[ItemPedidoResponse]
     
     class Config:
