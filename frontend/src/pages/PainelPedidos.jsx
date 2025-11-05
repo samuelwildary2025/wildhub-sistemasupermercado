@@ -18,11 +18,19 @@ const PainelPedidos = () => {
   const [showDetails, setShowDetails] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState([])
+  const [editObservacao, setEditObservacao] = useState('')
   const [concluidosPage, setConcluidosPage] = useState(0)
   const CONCLUIDOS_PAGE_SIZE = 15
   const todayKey = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()), [])
   const [concluidosDateFilter, setConcluidosDateFilter] = useState(todayKey)
   const datePickerRef = useRef(null)
+  // Snapshot anterior para detectar alterações vindas de PUT externos
+  const previousSnapshotRef = useRef(new Map())
+  // Mantém destaque "alterado" de forma persistente até faturar
+  const stickyAlteredIdsRef = useRef(new Set())
+  // Rastreia IDs que mudaram nesta atualização para autoabrir modal uma vez
+  const recentlyChangedIdsRef = useRef(new Set())
+  const autoOpenDoneRef = useRef(new Set())
 
   // obtém supermarketId do usuário logado (se houver)
   const getSupermarketId = () => {
@@ -35,6 +43,32 @@ const PainelPedidos = () => {
     }
   }
 
+  // ===== Persistência do destaque "alterado" entre reloads =====
+  const stickyStorageKey = (supermarketId) => `stickyAlteredIds:${supermarketId ?? 'global'}`
+  const loadStickyFromStorage = (supermarketId) => {
+    try {
+      const raw = localStorage.getItem(stickyStorageKey(supermarketId))
+      const arr = raw ? JSON.parse(raw) : []
+      return new Set(Array.isArray(arr) ? arr : [])
+    } catch {
+      return new Set()
+    }
+  }
+  const saveStickyToStorage = (supermarketId, set) => {
+    try {
+      const arr = Array.from(set || [])
+      localStorage.setItem(stickyStorageKey(supermarketId), JSON.stringify(arr))
+    } catch {
+      // ignore
+    }
+  }
+
+  // Carrega os IDs persistidos uma única vez ao montar
+  useEffect(() => {
+    const smId = getSupermarketId()
+    stickyAlteredIdsRef.current = loadStickyFromStorage(smId)
+  }, [])
+
   useEffect(() => {
     loadPedidos()
   }, [])
@@ -44,7 +78,8 @@ const PainelPedidos = () => {
     try {
       const supermarketId = getSupermarketId()
       const response = await getPedidos(null, supermarketId)
-      setPedidos(response.data)
+      // Marca automaticamente pedidos alterados (server-side via foi_alterado ou diff local)
+      setPedidos(applyAlteredFlagFromChanges(response.data))
     } catch (error) {
       console.error('Erro ao atualizar pedidos:', error)
     }
@@ -73,7 +108,8 @@ const PainelPedidos = () => {
     try {
       const supermarketId = getSupermarketId()
       const response = await getPedidos(null, supermarketId)
-      setPedidos(response.data)
+      // Inicializa snapshot e aplica flag de alteração quando houver diffs
+      setPedidos(applyAlteredFlagFromChanges(response.data))
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error)
     } finally {
@@ -118,6 +154,87 @@ const PainelPedidos = () => {
       return sum + preco * qtd
     }, 0)
   }
+
+  // Assinatura normalizada do pedido para detectar alterações relevantes
+  const makePedidoSignature = (p) => {
+    const itensOrig = Array.isArray(p?.itens) ? p.itens : (Array.isArray(p?.items) ? p.items : [])
+    const itensNorm = itensOrig.map((it) => ({
+      name: it?.nome_produto ?? it?.product_name ?? '',
+      qty: Number(it?.quantidade ?? it?.quantity ?? 0),
+      price: Number(it?.preco_unitario ?? it?.unit_price ?? 0),
+    }))
+    // Ordena para garantir assinatura estável independente da ordem dos itens
+    itensNorm.sort((a, b) => a.name.localeCompare(b.name))
+    const total = (p?.valor_total ?? p?.total ?? itensNorm.reduce((s, it) => s + (it.price || 0) * (it.qty || 0), 0))
+    const obs = p?.observacao ?? p?.observacoes ?? ''
+    const status = p?.status ?? ''
+    // Inclui campos básicos que o usuário pode alterar no modal
+    const nomeCliente = p?.cliente_nome ?? p?.nome_cliente ?? p?.client_name ?? ''
+    const forma = p?.forma ?? p?.payment_method ?? ''
+    const endereco = p?.endereco ?? p?.address ?? ''
+    const telefone = p?.telefone ?? p?.phone ?? ''
+    return JSON.stringify({ status, obs, nomeCliente, forma, endereco, telefone, itens: itensNorm, total })
+  }
+
+  // Aplica flag foi_alterado quando detecta diffs em relação ao snapshot anterior
+  const applyAlteredFlagFromChanges = (data) => {
+    const prevSig = previousSnapshotRef.current || new Map()
+    const nextSig = new Map()
+    const smId = getSupermarketId()
+    // Garante que o sticky atual esteja sincronizado com o storage
+    const persisted = loadStickyFromStorage(smId)
+    const sticky = stickyAlteredIdsRef.current || new Set()
+    if (sticky.size === 0 && persisted.size > 0) {
+      stickyAlteredIdsRef.current = new Set(persisted)
+    }
+    const recently = new Set()
+    const arr = Array.isArray(data) ? data : []
+
+    const normalized = arr.map((p) => {
+      const sig = makePedidoSignature(p)
+      const changed = prevSig.has(p.id) && prevSig.get(p.id) !== sig
+      const serverFlag = Boolean(p.foi_alterado)
+
+      // Atualiza assinatura
+      nextSig.set(p.id, sig)
+
+      // Gerencia persistência de destaque
+      if (p.status === 'faturado') {
+        sticky.delete(p.id) // ao faturar, limpa destaque
+      } else if (changed || serverFlag) {
+        sticky.add(p.id) // qualquer mudança marca para persistir
+      }
+
+      if (changed) {
+        recently.add(p.id)
+      }
+
+      const shouldStick = sticky.has(p.id)
+      return { ...p, foi_alterado: shouldStick || changed || serverFlag }
+    })
+
+    previousSnapshotRef.current = nextSig
+    stickyAlteredIdsRef.current = sticky
+    recentlyChangedIdsRef.current = recently
+    // Persiste após aplicar
+    saveStickyToStorage(smId, sticky)
+    return normalized
+  }
+
+  // Autoabre o modal para o primeiro pedido que mudou nesta atualização (uma vez por pedido)
+  useEffect(() => {
+    if (showDetails) return
+    const recently = recentlyChangedIdsRef.current || new Set()
+    const opened = autoOpenDoneRef.current || new Set()
+    const targetId = Array.from(recently).find((id) => !opened.has(id))
+    if (!targetId) return
+    const target = pedidos.find((p) => p.id === targetId)
+    if (target && target.status !== 'faturado') {
+      openDetails(target)
+      opened.add(targetId)
+      autoOpenDoneRef.current = opened
+    }
+  }, [pedidos, showDetails])
 
   const calculateStats = () => {
     const pedidosHoje = pedidos.filter((p) => getPedidoDateKey(p) === todayKey)
@@ -166,16 +283,87 @@ const PainelPedidos = () => {
     }
 
     try {
-      await updatePedido(pedidoId, payload)
+      const resp = await updatePedido(pedidoId, payload)
       setPedidos(pedidos.map(p => 
-        p.id === pedidoId ? { ...p, status: newStatus } : p
+        p.id === pedidoId ? { ...p, status: newStatus, foi_alterado: true } : p
       ))
+      // Atualiza persistência de destaque
+      const smId = getSupermarketId()
+      const sticky = stickyAlteredIdsRef.current || new Set()
+      if (newStatus === 'faturado') {
+        sticky.delete(pedidoId)
+      } else {
+        sticky.add(pedidoId)
+      }
+      stickyAlteredIdsRef.current = sticky
+      saveStickyToStorage(smId, sticky)
     } catch (error) {
       console.error('Erro ao atualizar status:', error)
       // Mesmo em erro, atualiza localmente para feedback imediato
       setPedidos(pedidos.map(p => 
-        p.id === pedidoId ? { ...p, status: newStatus } : p
+        p.id === pedidoId ? { ...p, status: newStatus, foi_alterado: true } : p
       ))
+      const smId = getSupermarketId()
+      const sticky = stickyAlteredIdsRef.current || new Set()
+      if (newStatus === 'faturado') {
+        sticky.delete(pedidoId)
+      } else {
+        sticky.add(pedidoId)
+      }
+      stickyAlteredIdsRef.current = sticky
+      saveStickyToStorage(smId, sticky)
+    }
+  }
+
+  const handleSaveAlteracoes = async () => {
+    if (!selectedPedido) return
+    const current = selectedPedido
+
+    // Monta payload completo, preservando todos os campos esperados pelo backend simples
+    const itensOrig = Array.isArray(current?.itens) ? current.itens : (Array.isArray(current?.items) ? current.items : [])
+    const itensNorm = itensOrig.map((it) => ({
+      id: it?.id,
+      product_name: it?.nome_produto ?? it?.product_name ?? 'Item',
+      quantity: it?.quantidade ?? it?.quantity ?? 0,
+      unit_price: it?.preco_unitario ?? it?.unit_price ?? 0
+    }))
+    const totalNorm = itensNorm.reduce((sum, it) => sum + (Number(it.unit_price) || 0) * (Number(it.quantity) || 0), 0)
+
+    const payload = {
+      client_name: current?.cliente_nome ?? current?.nome_cliente ?? current?.client_name ?? 'Cliente',
+      total: totalNorm || current?.total || 0,
+      status: current?.status,
+      created_at: current?.data_pedido ?? current?.created_at,
+      items: itensNorm,
+      telefone: current?.telefone ?? current?.phone ?? null,
+      address: current?.endereco ?? current?.address ?? null,
+      payment_method: current?.forma ?? current?.payment_method ?? null,
+      // Suporte a ambos backends: campo singular (robusto) e plural (servidor simples)
+      observacao: editObservacao ?? current?.observacao ?? null,
+      observacoes: editObservacao ?? current?.observacoes ?? null,
+      supermarket_id: current?.supermarket_id ?? getSupermarketId() ?? 1
+    }
+
+    try {
+      await updatePedido(current.id, payload)
+      setPedidos(prev => prev.map(p => p.id === current.id ? { ...p, observacao: editObservacao, observacoes: editObservacao, foi_alterado: true } : p))
+      setSelectedPedido(prev => (prev ? { ...prev, observacao: editObservacao, observacoes: editObservacao, foi_alterado: true } : prev))
+      // Persiste destaque para manter após refresh
+      const smId = getSupermarketId()
+      const sticky = stickyAlteredIdsRef.current || new Set()
+      sticky.add(current.id)
+      stickyAlteredIdsRef.current = sticky
+      saveStickyToStorage(smId, sticky)
+    } catch (error) {
+      console.error('Erro ao salvar alterações:', error)
+      // Feedback imediato mesmo se falhar (visual)
+      setPedidos(prev => prev.map(p => p.id === current.id ? { ...p, observacao: editObservacao, observacoes: editObservacao, foi_alterado: true } : p))
+      setSelectedPedido(prev => (prev ? { ...prev, observacao: editObservacao, observacoes: editObservacao, foi_alterado: true } : prev))
+      const smId = getSupermarketId()
+      const sticky = stickyAlteredIdsRef.current || new Set()
+      sticky.add(current.id)
+      stickyAlteredIdsRef.current = sticky
+      saveStickyToStorage(smId, sticky)
     }
   }
 
@@ -184,6 +372,7 @@ const PainelPedidos = () => {
     setShowDetails(true)
     setChatMessages([])
     setChatInput('')
+    setEditObservacao(pedido?.observacao ?? pedido?.observacoes ?? '')
   }
   const closeDetails = () => {
     setShowDetails(false)
@@ -298,6 +487,7 @@ Obrigado pela preferência!
     }
   }
 
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark-900">
@@ -368,6 +558,7 @@ Obrigado pela preferência!
         </div>
 
         {/* Ações */}
+        {/* Botões de teste removidos desta tela para evitar acesso por funcionários */}
     
 
         {/* Duas Colunas: Em andamento x Concluídos */}
@@ -385,19 +576,25 @@ Obrigado pela preferência!
               {pendentesPedidos.map((pedido) => {
                 const clienteNome = pedido?.cliente_nome || pedido?.nome_cliente || pedido?.client_name || 'Cliente'
                 const data = pedido?.data_pedido || pedido?.created_at
+                const hasUpdates = Boolean(pedido?.foi_alterado)
                 return (
                   <div
                     key={pedido.id}
                     // CORRIGIDO: Aplicando cores de fundo e texto Light/Dark mais coerentes
-                    className={`w-full flex items-center justify-between py-3 px-3 rounded-lg bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 border shadow-sm cursor-pointer ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-transparent border-gray-300 dark:border-dark-700'}`}
+                    className={`w-full flex items-center justify-between py-3 px-3 rounded-lg border shadow-sm cursor-pointer ${hasUpdates
+                      ? 'bg-red-50 hover:bg-red-100 border-red-400 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:border-red-500 shake-alert'
+                      : 'bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 border-gray-300 dark:border-dark-700'} ${selectedPedido?.id === pedido.id ? 'ring-2 ring-yellow-400 border-yellow-600' : 'ring-1 ring-transparent'}`}
                   >
                     <div onClick={() => openDetails(pedido)} className="flex-1 cursor-pointer">
                       <p className="text-gray-900 dark:text-white font-medium">{clienteNome}</p>
                       {/* CORRIGIDO: Adicionado timeZone: 'America/Fortaleza' */}
-                      <p className="text-gray-500 dark:text-dark-400 text-sm">{data ? new Date(data).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }) : '-'}</p>
+                      <p className={`text-sm ${hasUpdates ? 'text-red-700 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-dark-400'}`}>{data ? new Date(data).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }) : '-'}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-yellow-600 dark:text-yellow-400 font-semibold">{formatCurrency(orderTotal(pedido))}</span>
+                      <span className={`${hasUpdates ? 'text-red-700 dark:text-red-300' : 'text-yellow-600 dark:text-yellow-400'} font-semibold`}>{formatCurrency(orderTotal(pedido))}</span>
+                      {hasUpdates && (
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-600 text-white">Pedido alterado</span>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleStatusChange(pedido.id, 'faturado') }}
                         className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded"
@@ -519,6 +716,9 @@ Obrigado pela preferência!
                 <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
                   {`Pedido de ${selectedPedido?.cliente_nome || selectedPedido?.nome_cliente || selectedPedido?.client_name || 'Cliente'}`}
                 </h3>
+                {Boolean(selectedPedido?.foi_alterado) && (
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-600 text-white">Pedido alterado</span>
+                )}
                 <button className="text-gray-500 dark:text-dark-400 hover:text-gray-900 dark:hover:text-white" onClick={closeDetails}>
                   <X size={20} />
                 </button>
@@ -585,6 +785,8 @@ Obrigado pela preferência!
                       <p className="text-amber-800 dark:text-amber-100 text-sm">{selectedPedido?.observacao || selectedPedido?.observacoes}</p>
                     </div>
                   )}
+
+                  {/* Editor de Observações removido conforme solicitação para evitar espaço extra */}
 
                   {/* Ação */}
                   {selectedPedido?.status !== 'faturado' && (
