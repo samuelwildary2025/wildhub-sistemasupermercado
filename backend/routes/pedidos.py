@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func, inspect, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import traceback
 import os
 import re
 import json
+import uuid
 from typing import List, Optional
 from database import get_db
 from models.pedido import Pedido, ItemPedido
@@ -62,27 +64,49 @@ def _placeholder_email(tenant_id: int, telefone: str) -> str:
     return f"cliente-{tenant_id}-{digits}@contatos.supermercado"
 
 
+def _normalize_digits(value: Optional[str]) -> str:
+    """Extrai apenas dígitos de um telefone para comparação robusta."""
+    if not value:
+        return ""
+    return "".join(re.findall(r"\d", value))
+
+
 def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreate) -> Optional[Cliente]:
-    """Garante que o cliente existe na base a partir dos dados do pedido e retorna-o."""
+    """Garante que o cliente existe na base a partir dos dados do pedido e retorna-o.
+
+    Corrige duplicidades por variação de formato de telefone normalizando por dígitos
+    e aplica rollback seguro se houver falha de integridade na criação.
+    """
     telefone = getattr(payload, "telefone", None)
     nome = payload.nome_cliente
+    endereco = getattr(payload, "endereco", None)
 
     if not telefone and not nome:
         return None
 
     query = db.query(Cliente).filter(Cliente.tenant_id == tenant_id)
 
-    cliente = None
-    if telefone:
-        cliente = query.filter(Cliente.telefone == telefone).first()
-    if not cliente:
-        cliente = query.filter(Cliente.nome == nome).first()
+    # 1) Tenta localizar por dígitos do telefone, ignorando formatação
+    cliente: Optional[Cliente] = None
+    phone_digits = _normalize_digits(telefone)
+    if phone_digits:
+        try:
+            candidates = query.filter(Cliente.telefone != None).all()  # type: ignore
+            for c in candidates:
+                if _normalize_digits(c.telefone) == phone_digits:
+                    cliente = c
+                    break
+        except SQLAlchemyError:
+            # Em caso de erro de consulta, segue com outras estratégias
+            cliente = None
 
-    endereco = getattr(payload, "endereco", None)
+    # 2) Fallback: tenta por nome exato
+    if not cliente and nome:
+        cliente = query.filter(Cliente.nome == nome).first()
 
     if cliente:
         updated = False
-        if telefone and cliente.telefone != telefone:
+        if telefone and (_normalize_digits(cliente.telefone) != phone_digits):
             cliente.telefone = telefone
             updated = True
         if nome and cliente.nome != nome:
@@ -94,21 +118,39 @@ def _upsert_cliente_from_order(db: Session, tenant_id: int, payload: PedidoCreat
         if updated:
             cliente.ativo = True
         return cliente
-    else:
-        if not telefone:
-            # Não cria registros sem telefone para evitar duplicidades
-            return None
-        cliente = Cliente(
-            nome=nome or "Cliente",
-            email=_placeholder_email(tenant_id, telefone),
-            telefone=telefone,
-            endereco=endereco,
-            tenant_id=tenant_id,
-            ativo=True,
-        )
+
+    # 3) Não encontrado: criar novo cliente com e-mail placeholder único
+    if not telefone:
+        # Não cria registros sem telefone para evitar duplicidades
+        return None
+
+    base_email = _placeholder_email(tenant_id, telefone)
+    email = base_email
+    # Garante unicidade do e-mail placeholder se já existir
+    existing_email = db.query(Cliente).filter(Cliente.email == email).first()
+    if existing_email is not None:
+        email = f"cliente-{tenant_id}-{phone_digits}-{uuid.uuid4().hex[:6]}@contatos.supermercado"
+
+    cliente = Cliente(
+        nome=nome or "Cliente",
+        email=email,
+        telefone=telefone,
+        endereco=endereco,
+        tenant_id=tenant_id,
+        ativo=True,
+    )
+
+    try:
         db.add(cliente)
         db.flush()
         return cliente
+    except IntegrityError:
+        # Se falhar (ex.: violação de única de e-mail), garante rollback e segue sem cliente
+        db.rollback()
+        return None
+    except SQLAlchemyError:
+        db.rollback()
+        return None
 
 
 @router.post("/", response_model=PedidoResponse)
@@ -344,6 +386,11 @@ def update_pedido(
         if not refreshed:
             log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after=update_data, success=False, message="Pedido desapareceu após update")
             raise HTTPException(status_code=500, detail="Falha ao atualizar pedido")
+        # Marca o pedido como alterado para permitir destaque visual no frontend imediatamente após o PUT
+        try:
+            setattr(refreshed, "foi_alterado", True)
+        except Exception:
+            pass
         log_event("update", "pedido", pedido_id, getattr(current_user, "email", None), before=before_snapshot, after={"nome_cliente": refreshed.nome_cliente, "status": refreshed.status, "valor_total": refreshed.valor_total}, success=True)
         return refreshed
     except HTTPException:
@@ -477,6 +524,12 @@ def update_pedido_por_telefone(
 
         db.commit()
         db.refresh(pedido)
+
+        # Marca o pedido como alterado para permitir destaque visual no frontend imediatamente após o PUT
+        try:
+            setattr(pedido, "foi_alterado", True)
+        except Exception:
+            pass
 
         log_event(
             "update",
